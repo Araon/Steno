@@ -7,10 +7,6 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-# ============================================
-# Enums
-# ============================================
-
 
 class CaptionStyle(str, Enum):
     """Visual style for captions."""
@@ -39,11 +35,6 @@ class CaptionPosition(str, Enum):
     BOTTOM = "bottom"
 
 
-# ============================================
-# Transcript Models
-# ============================================
-
-
 class TranscriptWord(BaseModel):
     """A single word from speech-to-text with timing information."""
 
@@ -64,11 +55,6 @@ class Transcript(BaseModel):
     text: str | None = Field(None, description="Full transcript text")
     duration: float = Field(..., ge=0, description="Total duration in seconds")
     language: str = Field(default="en", description="Detected or specified language")
-
-
-# ============================================
-# Caption Models
-# ============================================
 
 
 class CaptionWord(BaseModel):
@@ -118,11 +104,6 @@ class Captions(BaseModel):
     settings: CaptionSettings | None = Field(
         default=None, description="Global settings"
     )
-
-
-# ============================================
-# API Request/Response Models
-# ============================================
 
 
 class TranscribeResponse(BaseModel):
