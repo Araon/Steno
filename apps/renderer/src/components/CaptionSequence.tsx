@@ -1,7 +1,16 @@
 import React from "react";
 import { Sequence, useVideoConfig } from "remotion";
-import type { Caption as CaptionType, CaptionSettings } from "@steno/contracts";
-import { DEFAULT_CAPTION_SETTINGS } from "@steno/contracts";
+import type {
+  Caption as CaptionType,
+  CaptionSettings,
+  CaptionPosition,
+  CaptionPositionCoords,
+} from "@steno/contracts";
+import {
+  DEFAULT_CAPTION_SETTINGS,
+  isPositionCoords,
+  presetToCoords,
+} from "@steno/contracts";
 import { Caption } from "./Caption";
 import { ScaleIn, FadeIn, WordByWord, Typewriter } from "./animations";
 
@@ -11,14 +20,40 @@ interface CaptionSequenceProps {
 }
 
 /**
+ * Convert position to coordinates (handles both presets and coordinates)
+ */
+function getPositionCoords(position: CaptionPosition): CaptionPositionCoords {
+  if (isPositionCoords(position)) {
+    return position;
+  }
+  return presetToCoords(position);
+}
+
+/**
  * Maps captions array to Remotion sequences with appropriate animations.
  */
 export const CaptionSequence: React.FC<CaptionSequenceProps> = ({
   captions,
   settings,
 }) => {
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
   const mergedSettings = { ...DEFAULT_CAPTION_SETTINGS, ...settings };
+
+  // #region agent log
+  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: "debug-session",
+      runId: "run2",
+      hypothesisId: "H4",
+      location: "CaptionSequence.tsx:video-config",
+      message: "Video config sizing",
+      data: { width, height, fps, captionCount: captions.length },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   return (
     <>
@@ -73,7 +108,15 @@ export const CaptionSequence: React.FC<CaptionSequenceProps> = ({
             from={startFrame}
             durationInFrames={durationInFrames}
           >
-            {renderAnimatedCaption()}
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "100%",
+              }}
+            >
+              {renderAnimatedCaption()}
+            </div>
           </Sequence>
         );
       })}
@@ -82,24 +125,33 @@ export const CaptionSequence: React.FC<CaptionSequenceProps> = ({
 };
 
 /**
- * Word-by-word caption wrapper with positioning
+ * Word-by-word caption wrapper with freeform positioning
  */
 const WordByWordCaption: React.FC<{
   caption: CaptionType;
   settings: CaptionSettings;
 }> = ({ caption, settings }) => {
-  // Get position classes
-  const getPositionClasses = () => {
-    switch (caption.position) {
-      case "top":
-        return "items-start pt-20";
-      case "bottom":
-        return "items-end pb-20";
-      case "center":
-      default:
-        return "items-center";
-    }
-  };
+  const coords = getPositionCoords(caption.position);
+
+  // #region agent log
+  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: "debug-session",
+      runId: "run2",
+      hypothesisId: "H2",
+      location: "CaptionSequence.tsx:word-by-word",
+      message: "WordByWord caption coords",
+      data: {
+        id: caption.id,
+        rawPosition: caption.position,
+        resolvedCoords: coords,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   // Get style classes
   const getStyleClasses = () => {
@@ -117,7 +169,14 @@ const WordByWordCaption: React.FC<{
 
   return (
     <div
-      className={`flex flex-col justify-center ${getPositionClasses()} w-full h-full px-8`}
+      className="absolute"
+      style={{
+        position: "absolute",
+        left: `${coords.x}%`,
+        top: `${coords.y}%`,
+        transform: "translate(-50%, -50%)",
+        maxWidth: "90%",
+      }}
     >
       <div
         className={`text-center ${getStyleClasses()} relative`}
@@ -126,7 +185,7 @@ const WordByWordCaption: React.FC<{
           fontSize: `${settings.fontSize}px`,
           fontWeight: settings.fontWeight,
           color: settings.color,
-          lineHeight: 1.3,
+          lineHeight: settings.lineHeight,
         }}
       >
         {caption.style === "highlight" && (
@@ -151,24 +210,33 @@ const WordByWordCaption: React.FC<{
 };
 
 /**
- * Typewriter caption wrapper with positioning
+ * Typewriter caption wrapper with freeform positioning
  */
 const TypewriterCaption: React.FC<{
   caption: CaptionType;
   settings: CaptionSettings;
 }> = ({ caption, settings }) => {
-  // Get position classes
-  const getPositionClasses = () => {
-    switch (caption.position) {
-      case "top":
-        return "items-start pt-20";
-      case "bottom":
-        return "items-end pb-20";
-      case "center":
-      default:
-        return "items-center";
-    }
-  };
+  const coords = getPositionCoords(caption.position);
+
+  // #region agent log
+  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: "debug-session",
+      runId: "run2",
+      hypothesisId: "H3",
+      location: "CaptionSequence.tsx:typewriter",
+      message: "Typewriter caption coords",
+      data: {
+        id: caption.id,
+        rawPosition: caption.position,
+        resolvedCoords: coords,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   // Get style classes
   const getStyleClasses = () => {
@@ -186,7 +254,14 @@ const TypewriterCaption: React.FC<{
 
   return (
     <div
-      className={`flex flex-col justify-center ${getPositionClasses()} w-full h-full px-8`}
+      className="absolute"
+      style={{
+        position: "absolute",
+        left: `${coords.x}%`,
+        top: `${coords.y}%`,
+        transform: "translate(-50%, -50%)",
+        maxWidth: "90%",
+      }}
     >
       <div
         className={`text-center ${getStyleClasses()}`}
@@ -195,7 +270,7 @@ const TypewriterCaption: React.FC<{
           fontSize: `${settings.fontSize}px`,
           fontWeight: settings.fontWeight,
           color: settings.color,
-          lineHeight: 1.3,
+          lineHeight: settings.lineHeight,
         }}
       >
         <Typewriter

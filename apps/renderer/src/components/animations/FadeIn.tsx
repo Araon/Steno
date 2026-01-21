@@ -28,6 +28,9 @@ export const FadeIn: React.FC<FadeInProps> = ({
   return (
     <div
       style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
         opacity,
         transform: `translateY(${translateY}px)`,
       }}

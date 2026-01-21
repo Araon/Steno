@@ -13,13 +13,14 @@ const defaultCaptions: Captions = {
       start: 0,
       end: 1.5,
       words: [
-        { text: "Hello", start: 0, end: 0.6 },
-        { text: "world", start: 0.7, end: 1.5 },
+        { text: "Hello", start: 0, end: 0.6, fontSizeMultiplier: 1.0 },
+        { text: "world", start: 0.7, end: 1.5, fontSizeMultiplier: 1.2 },
       ],
       emphasis: ["world"],
       style: "bold",
       animation: "scale-in",
-      position: "center",
+      position: { x: 50, y: 50 },
+      lineCount: 1,
     },
     {
       id: "caption_1",
@@ -29,12 +30,13 @@ const defaultCaptions: Captions = {
       words: [
         { text: "This", start: 1.6, end: 1.9 },
         { text: "is", start: 2.0, end: 2.2 },
-        { text: "Steno", start: 2.3, end: 3.0 },
+        { text: "Steno", start: 2.3, end: 3.0, fontSizeMultiplier: 1.15 },
       ],
       emphasis: ["Steno"],
       style: "normal",
       animation: "fade-in",
-      position: "center",
+      position: { x: 50, y: 50 },
+      lineCount: 1,
     },
     {
       id: "caption_2",
@@ -42,13 +44,14 @@ const defaultCaptions: Captions = {
       start: 3.1,
       end: 5.0,
       words: [
-        { text: "Lyric-style", start: 3.1, end: 3.8 },
-        { text: "captions", start: 3.9, end: 5.0 },
+        { text: "Lyric-style", start: 3.1, end: 3.8, fontSizeMultiplier: 1.1 },
+        { text: "captions", start: 3.9, end: 5.0, fontSizeMultiplier: 1.2 },
       ],
       emphasis: ["captions"],
       style: "highlight",
       animation: "word-by-word",
-      position: "center",
+      position: { x: 50, y: 50 },
+      lineCount: 1,
     },
   ],
   settings: {
@@ -58,6 +61,8 @@ const defaultCaptions: Captions = {
     color: "#FFFFFF",
     backgroundColor: "transparent",
     emphasisScale: 1.2,
+    maxCharsPerLine: 30,
+    lineHeight: 1.3,
   },
 };
 

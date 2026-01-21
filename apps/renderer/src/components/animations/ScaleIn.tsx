@@ -36,6 +36,9 @@ export const ScaleIn: React.FC<ScaleInProps> = ({
   return (
     <div
       style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
         transform: `scale(${interpolate(scale, [0, 1], [0.8, 1])})`,
         opacity,
       }}

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Remotion video renderer for Steno captions",
   "scripts": {
-    "dev": "remotion studio",
+    "dev": "remotion studio --no-open",
     "build": "remotion bundle",
     "render": "remotion render",
     "upgrade": "remotion upgrade"
