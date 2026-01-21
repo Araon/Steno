@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Edit2, Trash2, Sparkles, Type, Move, Copy } from "lucide-react";
 import { useStenoStore } from "../store/useStenoStore";
 import type {
@@ -68,7 +68,10 @@ export const CaptionDetailsPanel: React.FC<CaptionDetailsPanelProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
 
-  const positionCoords = caption ? getPositionCoords(caption.position) : { x: 50, y: 50 };
+  const positionCoords = useMemo(
+    () => (caption ? getPositionCoords(caption.position) : { x: 50, y: 50 }),
+    [caption]
+  );
 
   const handlePresetChange = useCallback(
     (preset: CaptionPositionPreset) => {
@@ -76,12 +79,12 @@ export const CaptionDetailsPanel: React.FC<CaptionDetailsPanelProps> = ({
       const coords = presetToCoords(preset);
       updateCaption(caption.id, { position: coords });
     },
-    [caption?.id, updateCaption]
+    [caption, updateCaption]
   );
 
   const handleApplyToAll = (
     type: "style" | "animation" | "position",
-    value: any
+    value: CaptionStyle | CaptionAnimation | CaptionPosition
   ) => {
     if (!caption) return;
     if (confirm(`Apply this ${type} to all captions?`)) {
@@ -102,7 +105,7 @@ export const CaptionDetailsPanel: React.FC<CaptionDetailsPanelProps> = ({
       };
       updateCaption(caption.id, { position: newPosition });
     },
-    [caption?.id, positionCoords, updateCaption]
+    [caption, positionCoords, updateCaption]
   );
 
   if (!caption) {

@@ -26,12 +26,6 @@ const TimelineCaptionBlock: React.FC<TimelineCaptionBlockProps> = ({
   const left = (caption.start / totalDuration) * timelineWidth;
   const width = Math.max(20, ((caption.end - caption.start) / totalDuration) * timelineWidth);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = (seconds % 60).toFixed(1);
-    return `${mins}:${secs.padStart(4, "0")}`;
-  };
-
   return (
     <div
       className={`absolute h-10 rounded cursor-pointer transition-all overflow-hidden ${

@@ -3,8 +3,6 @@ import { Play, RefreshCw } from "lucide-react";
 import {
   VideoUpload,
   CaptionEditor,
-  Preview,
-  Export,
   ProcessingStatus,
 } from "./components";
 import { useStenoStore } from "./store/useStenoStore";
@@ -121,7 +119,7 @@ function App() {
                 Create Lyric-Style Captions
               </h2>
               <p className="text-slate-400">
-                Upload a video and we'll generate animated captions automatically
+                Upload a video and we&apos;ll generate animated captions automatically
               </p>
             </div>
 

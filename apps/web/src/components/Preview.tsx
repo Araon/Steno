@@ -5,7 +5,6 @@ import { useStenoStore } from "../store/useStenoStore";
 import { PreviewComposition, type PreviewCompositionProps } from "./PreviewComposition";
 import { isPositionCoords, presetToCoords, type CaptionPosition } from "@steno/contracts";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TypedPlayer = Player as React.ComponentType<{
   component: React.ComponentType<PreviewCompositionProps>;
   inputProps: PreviewCompositionProps;
