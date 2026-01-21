@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import whisper
 
@@ -17,7 +16,7 @@ class WhisperService:
     # Available models: tiny, base, small, medium, large
     DEFAULT_MODEL = "base"
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         """Initialize the Whisper service.
 
         Args:
@@ -25,7 +24,7 @@ class WhisperService:
                 Options: tiny, base, small, medium, large
         """
         self.model_name = model_name or self.DEFAULT_MODEL
-        self._model: Optional[whisper.Whisper] = None
+        self._model: whisper.Whisper | None = None
         logger.info(f"WhisperService initialized with model: {self.model_name}")
 
     @property
@@ -40,7 +39,7 @@ class WhisperService:
     def transcribe(
         self,
         audio_path: str | Path,
-        language: Optional[str] = None,
+        language: str | None = None,
     ) -> Transcript:
         """Transcribe audio file with word-level timestamps.
 
@@ -90,7 +89,7 @@ class WhisperService:
 
         except Exception as e:
             logger.error(f"Transcription failed: {e}")
-            raise RuntimeError(f"Transcription failed: {e}")
+            raise RuntimeError(f"Transcription failed: {e}") from e
 
     def _extract_words(self, result: dict) -> list[TranscriptWord]:
         """Extract word-level data from Whisper result.
@@ -155,9 +154,7 @@ class WhisperService:
         """
         available = self.get_available_models()
         if model_name not in available:
-            raise ValueError(
-                f"Invalid model: {model_name}. Available: {available}"
-            )
+            raise ValueError(f"Invalid model: {model_name}. Available: {available}")
 
         if model_name != self.model_name:
             logger.info(f"Changing model from {self.model_name} to {model_name}")

@@ -1,13 +1,11 @@
 """Caption stylization - add emphasis, animations, and visual styles."""
 
 import logging
-import random
-from typing import Optional
 
 import spacy
 from spacy.language import Language
 
-from ..models import Caption, CaptionAnimation, CaptionStyle, Captions, CaptionSettings
+from ..models import Caption, CaptionAnimation, Captions, CaptionSettings, CaptionStyle
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +25,14 @@ class CaptionStylizer:
         CaptionAnimation.WORD_BY_WORD,
     ]
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         """Initialize the caption stylizer.
 
         Args:
             model_name: spaCy model to use for NLP analysis.
         """
         self.model_name = model_name or self.DEFAULT_MODEL
-        self._nlp: Optional[Language] = None
+        self._nlp: Language | None = None
 
     @property
     def nlp(self) -> Language:
@@ -44,9 +42,7 @@ class CaptionStylizer:
             try:
                 self._nlp = spacy.load(self.model_name)
             except OSError:
-                logger.warning(
-                    f"Model {self.model_name} not found, downloading..."
-                )
+                logger.warning(f"Model {self.model_name} not found, downloading...")
                 spacy.cli.download(self.model_name)
                 self._nlp = spacy.load(self.model_name)
             logger.info("spaCy model loaded successfully")
@@ -163,7 +159,7 @@ class CaptionStylizer:
         if not emphasis and caption.words:
             last_word = caption.words[-1].text
             # Clean punctuation
-            clean_word = last_word.rstrip('.,!?')
+            clean_word = last_word.rstrip(".,!?")
             if clean_word:
                 emphasis.append(clean_word)
 
@@ -197,14 +193,14 @@ class CaptionStylizer:
         Returns:
             Selected style.
         """
-        text = caption.text.lower()
+        caption.text.lower()
 
         # Questions get italic style
-        if caption.text.strip().endswith('?'):
+        if caption.text.strip().endswith("?"):
             return CaptionStyle.ITALIC
 
         # Exclamations get bold style
-        if caption.text.strip().endswith('!'):
+        if caption.text.strip().endswith("!"):
             return CaptionStyle.BOLD
 
         # Short, punchy captions (1-2 words) get bold

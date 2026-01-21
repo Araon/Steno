@@ -4,10 +4,8 @@ These models mirror the TypeScript contracts in @steno/contracts.
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
-
 
 # ============================================
 # Enums
@@ -52,7 +50,7 @@ class TranscriptWord(BaseModel):
     text: str = Field(..., description="The transcribed word")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
-    confidence: Optional[float] = Field(
+    confidence: float | None = Field(
         None, ge=0, le=1, description="Confidence score (0-1)"
     )
 
@@ -63,7 +61,7 @@ class Transcript(BaseModel):
     words: list[TranscriptWord] = Field(
         ..., description="Array of words with timing information"
     )
-    text: Optional[str] = Field(None, description="Full transcript text")
+    text: str | None = Field(None, description="Full transcript text")
     duration: float = Field(..., ge=0, description="Total duration in seconds")
     language: str = Field(default="en", description="Detected or specified language")
 
@@ -117,7 +115,7 @@ class Captions(BaseModel):
 
     version: str = Field(default="1.0", description="Schema version")
     captions: list[Caption] = Field(..., description="Array of caption segments")
-    settings: Optional[CaptionSettings] = Field(
+    settings: CaptionSettings | None = Field(
         default=None, description="Global settings"
     )
 

@@ -45,6 +45,18 @@ target-version = ["py311"]
 line-length = 88
 target-version = "py311"
 
+# Exclude common directories
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "node_modules",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
 # Enable flake8-compatible rules (E, F, W) plus more
 select = [
     "E",   # pycodestyle errors
@@ -59,19 +71,8 @@ select = [
 ]
 
 # Ignore line length (handled by formatter)
-ignore = ["E501"]
+ignore = ["E501", "B008", "N815"]
 
 # Enable auto-fixing
 fixable = ["ALL"]
 unfixable = []
-
-# Exclude common directories
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "node_modules",
-    "dist",
-    "build",
-]

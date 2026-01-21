@@ -1,11 +1,9 @@
 """Audio extraction and processing using FFmpeg/pydub."""
 
 import logging
-import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,7 @@ class AudioProcessor:
     CHANNELS = 1  # Mono
     FORMAT = "wav"
 
-    def __init__(self, temp_dir: Optional[str] = None):
+    def __init__(self, temp_dir: str | None = None):
         """Initialize the audio processor.
 
         Args:
@@ -29,12 +27,12 @@ class AudioProcessor:
 
     def _verify_ffmpeg(self) -> None:
         """Verify FFmpeg is installed and accessible.
-        
+
         This is called lazily when FFmpeg is actually needed.
         """
         if self._ffmpeg_verified:
             return
-            
+
         try:
             result = subprocess.run(
                 ["ffmpeg", "-version"],
@@ -44,7 +42,7 @@ class AudioProcessor:
             )
             logger.debug(f"FFmpeg found: {result.stdout.split(chr(10))[0]}")
             self._ffmpeg_verified = True
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise RuntimeError(
                 "FFmpeg not found. Please install FFmpeg and ensure it's in PATH.\n"
                 "Installation instructions:\n"
@@ -52,14 +50,14 @@ class AudioProcessor:
                 "  macOS: brew install ffmpeg\n"
                 "  Windows: Download from https://ffmpeg.org/download.html\n"
                 "  Or use your system's package manager."
-            )
+            ) from e
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"FFmpeg error: {e.stderr}")
+            raise RuntimeError(f"FFmpeg error: {e.stderr}") from e
 
     def extract_audio(
         self,
         video_path: str | Path,
-        output_path: Optional[str | Path] = None,
+        output_path: str | Path | None = None,
     ) -> Path:
         """Extract audio from video and convert to Whisper-compatible format.
 
@@ -96,16 +94,20 @@ class AudioProcessor:
             # FFmpeg command to extract and convert audio
             cmd = [
                 "ffmpeg",
-                "-i", str(video_path),
+                "-i",
+                str(video_path),
                 "-vn",  # No video
-                "-acodec", "pcm_s16le",  # PCM 16-bit
-                "-ar", str(self.SAMPLE_RATE),  # Sample rate
-                "-ac", str(self.CHANNELS),  # Mono
+                "-acodec",
+                "pcm_s16le",  # PCM 16-bit
+                "-ar",
+                str(self.SAMPLE_RATE),  # Sample rate
+                "-ac",
+                str(self.CHANNELS),  # Mono
                 "-y",  # Overwrite output
                 str(output_path),
             ]
 
-            result = subprocess.run(
+            subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -120,7 +122,7 @@ class AudioProcessor:
 
         except subprocess.CalledProcessError as e:
             logger.error(f"FFmpeg error: {e.stderr}")
-            raise RuntimeError(f"Audio extraction failed: {e.stderr}")
+            raise RuntimeError(f"Audio extraction failed: {e.stderr}") from e
 
     def get_audio_duration(self, audio_path: str | Path) -> float:
         """Get the duration of an audio file in seconds.
@@ -141,9 +143,12 @@ class AudioProcessor:
         try:
             cmd = [
                 "ffprobe",
-                "-v", "quiet",
-                "-show_entries", "format=duration",
-                "-of", "csv=p=0",
+                "-v",
+                "quiet",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "csv=p=0",
                 str(audio_path),
             ]
 
@@ -159,7 +164,7 @@ class AudioProcessor:
 
         except (subprocess.CalledProcessError, ValueError) as e:
             logger.error(f"Error getting audio duration: {e}")
-            raise RuntimeError(f"Failed to get audio duration: {e}")
+            raise RuntimeError(f"Failed to get audio duration: {e}") from e
 
     def get_video_metadata(self, video_path: str | Path) -> dict:
         """Get metadata from a video file.
@@ -181,9 +186,12 @@ class AudioProcessor:
             # Get duration
             duration_cmd = [
                 "ffprobe",
-                "-v", "quiet",
-                "-show_entries", "format=duration",
-                "-of", "csv=p=0",
+                "-v",
+                "quiet",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "csv=p=0",
                 str(video_path),
             ]
             duration_result = subprocess.run(
@@ -194,10 +202,14 @@ class AudioProcessor:
             # Get video stream info (width, height, fps)
             stream_cmd = [
                 "ffprobe",
-                "-v", "quiet",
-                "-select_streams", "v:0",
-                "-show_entries", "stream=width,height,r_frame_rate",
-                "-of", "csv=p=0",
+                "-v",
+                "quiet",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height,r_frame_rate",
+                "-of",
+                "csv=p=0",
                 str(video_path),
             ]
             stream_result = subprocess.run(

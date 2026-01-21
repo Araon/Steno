@@ -4,7 +4,6 @@ import tempfile
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,24 +27,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-audio_processor: Optional[AudioProcessor] = None
-whisper_service: Optional[WhisperService] = None
-caption_segmenter: Optional[CaptionSegmenter] = None
-caption_stylizer: Optional[CaptionStylizer] = None
+audio_processor: AudioProcessor | None = None
+whisper_service: WhisperService | None = None
+caption_segmenter: CaptionSegmenter | None = None
+caption_stylizer: CaptionStylizer | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global audio_processor, whisper_service, caption_segmenter, \
-        caption_stylizer
+    global audio_processor, whisper_service, caption_segmenter, caption_stylizer
 
     logger.info("Initializing Steno API services...")
 
     # Initialize services
     audio_processor = AudioProcessor()
-    whisper_service = WhisperService(
-        model_name=os.getenv("WHISPER_MODEL", "base")
-    )
+    whisper_service = WhisperService(model_name=os.getenv("WHISPER_MODEL", "base"))
     caption_segmenter = CaptionSegmenter()
     caption_stylizer = CaptionStylizer()
 
@@ -67,7 +63,11 @@ app = FastAPI(
 # Configure CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,7 +82,7 @@ async def health_check():
 @app.post("/api/transcribe", response_model=TranscribeResponse)
 async def transcribe_video(
     file: UploadFile = File(..., description="Video file to transcribe"),
-    language: Optional[str] = Form(None, description="Language hint (e.g., 'en')"),
+    language: str | None = Form(None, description="Language hint (e.g., 'en')"),
 ):
     """Transcribe a video file and return word-level timestamps.
 
@@ -128,9 +128,9 @@ async def transcribe_video(
         )
 
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         # Cleanup temp files
         if os.path.exists(tmp_video_path):
@@ -178,7 +178,7 @@ async def generate_captions(request: GenerateCaptionsRequest):
 
     except Exception as e:
         logger.error(f"Caption generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================
@@ -189,7 +189,7 @@ async def generate_captions(request: GenerateCaptionsRequest):
 @app.post("/api/process", response_model=ProcessResponse)
 async def process_video(
     file: UploadFile = File(..., description="Video file to process"),
-    language: Optional[str] = Form(None, description="Language hint"),
+    language: str | None = Form(None, description="Language hint"),
     max_words_per_caption: int = Form(4, description="Max words per caption"),
     default_animation: str = Form("scale-in", description="Default animation"),
 ):
@@ -258,9 +258,9 @@ async def process_video(
         )
 
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         # Cleanup temp files
         if os.path.exists(tmp_video_path):

@@ -2,7 +2,6 @@
 
 import logging
 import uuid
-from typing import Optional
 
 import spacy
 from spacy.language import Language
@@ -32,7 +31,7 @@ class CaptionSegmenter:
 
     def __init__(
         self,
-        model_name: Optional[str] = None,
+        model_name: str | None = None,
         max_words_per_caption: int = DEFAULT_MAX_WORDS,
         min_words_per_caption: int = DEFAULT_MIN_WORDS,
     ):
@@ -46,7 +45,7 @@ class CaptionSegmenter:
         self.model_name = model_name or self.DEFAULT_MODEL
         self.max_words = max_words_per_caption
         self.min_words = min_words_per_caption
-        self._nlp: Optional[Language] = None
+        self._nlp: Language | None = None
 
     @property
     def nlp(self) -> Language:
@@ -56,9 +55,7 @@ class CaptionSegmenter:
             try:
                 self._nlp = spacy.load(self.model_name)
             except OSError:
-                logger.warning(
-                    f"Model {self.model_name} not found, downloading..."
-                )
+                logger.warning(f"Model {self.model_name} not found, downloading...")
                 spacy.cli.download(self.model_name)
                 self._nlp = spacy.load(self.model_name)
             logger.info("spaCy model loaded successfully")
@@ -123,7 +120,7 @@ class CaptionSegmenter:
         phrases = []
         current_phrase: list[TranscriptWord] = []
 
-        for i, word in enumerate(words):
+        for _i, word in enumerate(words):
             # Check for natural break points
             should_break = False
 
@@ -203,7 +200,7 @@ class CaptionSegmenter:
             True if ends with sentence punctuation.
         """
         text = text.strip()
-        return text.endswith(('.', '!', '?', '...'))
+        return text.endswith((".", "!", "?", "..."))
 
     def _create_caption(
         self,
