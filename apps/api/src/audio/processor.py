@@ -25,10 +25,16 @@ class AudioProcessor:
             temp_dir: Directory for temporary files. Uses system temp if None.
         """
         self.temp_dir = temp_dir or tempfile.gettempdir()
-        self._verify_ffmpeg()
+        self._ffmpeg_verified = False
 
     def _verify_ffmpeg(self) -> None:
-        """Verify FFmpeg is installed and accessible."""
+        """Verify FFmpeg is installed and accessible.
+        
+        This is called lazily when FFmpeg is actually needed.
+        """
+        if self._ffmpeg_verified:
+            return
+            
         try:
             result = subprocess.run(
                 ["ffmpeg", "-version"],
@@ -37,9 +43,15 @@ class AudioProcessor:
                 check=True,
             )
             logger.debug(f"FFmpeg found: {result.stdout.split(chr(10))[0]}")
+            self._ffmpeg_verified = True
         except FileNotFoundError:
             raise RuntimeError(
-                "FFmpeg not found. Please install FFmpeg and ensure it's in PATH."
+                "FFmpeg not found. Please install FFmpeg and ensure it's in PATH.\n"
+                "Installation instructions:\n"
+                "  Ubuntu/Debian: sudo apt-get install ffmpeg\n"
+                "  macOS: brew install ffmpeg\n"
+                "  Windows: Download from https://ffmpeg.org/download.html\n"
+                "  Or use your system's package manager."
             )
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"FFmpeg error: {e.stderr}")
@@ -76,6 +88,9 @@ class AudioProcessor:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Extracting audio from {video_path} to {output_path}")
+
+        # Verify FFmpeg is available before using it
+        self._verify_ffmpeg()
 
         try:
             # FFmpeg command to extract and convert audio
@@ -120,6 +135,9 @@ class AudioProcessor:
         if not audio_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
+        # Verify FFmpeg is available before using it
+        self._verify_ffmpeg()
+
         try:
             cmd = [
                 "ffprobe",
@@ -155,6 +173,9 @@ class AudioProcessor:
         video_path = Path(video_path)
         if not video_path.exists():
             raise FileNotFoundError(f"Video file not found: {video_path}")
+
+        # Verify FFmpeg is available before using it
+        self._verify_ffmpeg()
 
         try:
             # Get duration

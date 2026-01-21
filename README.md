@@ -49,6 +49,28 @@ packages/
 - Python >= 3.11
 - FFmpeg installed on system
 
+#### Installing FFmpeg
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
+
+**macOS:**
+```bash
+brew install ffmpeg
+```
+
+**Windows:**
+- Download from [FFmpeg official website](https://ffmpeg.org/download.html)
+- Or use package managers like `choco install ffmpeg` or `scoop install ffmpeg`
+
+**Verify installation:**
+```bash
+ffmpeg -version
+```
+
 ### Installation
 
 ```bash

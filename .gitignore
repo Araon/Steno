@@ -91,3 +91,5 @@ htmlcov/
 # pnpm-lock.yaml
 # package-lock.json
 # yarn.lock
+apps/renderer/build
+apps/renderer/captions.json
