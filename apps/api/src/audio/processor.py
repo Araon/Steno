@@ -59,19 +59,7 @@ class AudioProcessor:
         video_path: str | Path,
         output_path: str | Path | None = None,
     ) -> Path:
-        """Extract audio from video and convert to Whisper-compatible format.
 
-        Args:
-            video_path: Path to the input video file.
-            output_path: Optional output path. If None, creates temp file.
-
-        Returns:
-            Path to the extracted audio file (16kHz mono WAV).
-
-        Raises:
-            FileNotFoundError: If video file doesn't exist.
-            RuntimeError: If extraction fails.
-        """
         video_path = Path(video_path)
         if not video_path.exists():
             raise FileNotFoundError(f"Video file not found: {video_path}")

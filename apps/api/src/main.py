@@ -35,13 +35,15 @@ caption_stylizer: CaptionStylizer | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global audio_processor, whisper_service, caption_segmenter, caption_stylizer
+    global audio_processor, whisper_service, caption_segmenter, \
+        caption_stylizer
 
     logger.info("Initializing Steno API services...")
 
     # Initialize services
     audio_processor = AudioProcessor()
-    whisper_service = WhisperService(model_name=os.getenv("WHISPER_MODEL", "base"))
+    whisper_service = \
+        WhisperService(model_name=os.getenv("WHISPER_MODEL", "base"))
     caption_segmenter = CaptionSegmenter()
     caption_stylizer = CaptionStylizer()
 
@@ -82,7 +84,8 @@ async def health_check():
 @app.post("/api/transcribe", response_model=TranscribeResponse)
 async def transcribe_video(
     file: UploadFile = File(..., description="Video file to transcribe"),
-    language: str | None = Form(None, description="Language hint (e.g., 'en')"),
+    language: str | None =
+        Form(None, description="Language hint (e.g., 'en')"),
 ):
     """Transcribe a video file and return word-level timestamps.
 
@@ -115,6 +118,7 @@ async def transcribe_video(
     try:
         # Extract audio
         logger.info(f"Processing uploaded file: {file.filename}")
+        logger.info("Extracting audio from video")
         audio_path = audio_processor.extract_audio(tmp_video_path)
 
         # Transcribe
@@ -139,9 +143,6 @@ async def transcribe_video(
             os.unlink(audio_path)
 
 
-# ============================================
-# Caption Generation Endpoint
-# ============================================
 
 
 @app.post("/api/captions", response_model=GenerateCaptionsResponse)
