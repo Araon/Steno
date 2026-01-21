@@ -35,15 +35,17 @@ pipenv run python -m spacy download en_core_web_sm
 pnpm dev
 
 # Or individually
-pnpm dev:web      # http://localhost:5173
-pnpm dev:renderer # Remotion preview
-pnpm dev:api      # http://localhost:8000
+pnpm dev:web          # http://localhost:5173
+pnpm dev:renderer     # Remotion preview
+pnpm dev:renderer-api # http://localhost:3001
+pnpm dev:api          # http://localhost:8000
 ```
 
 ## Tech Stack
 
 - **Frontend**: TypeScript, React, Remotion, Tailwind, Zustand
 - **Backend**: Python 3.11, FastAPI, Whisper, FFmpeg, spaCy
+- **Renderer API**: Node.js, Express, Remotion bundler
 
 ## Architecture
 
