@@ -233,9 +233,7 @@ class CaptionSegmenter:
         text = " ".join(w.text for w in words)
 
         # Count lines
-        line_count = 1 + sum(
-            1 for w in caption_words if w.lineBreakBefore
-        )
+        line_count = 1 + sum(1 for w in caption_words if w.lineBreakBefore)
 
         # Get timing
         start = words[0].start
@@ -278,23 +276,22 @@ class CaptionSegmenter:
             word_len = len(word.text)
             needs_break = False
 
-            if i > 0:
-                # Would adding this word exceed the max chars?
-                if current_line_chars + 1 + word_len > self.max_chars_per_line:
-                    needs_break = True
-                # Is this a good word to start a new line?
-                elif (
+            # Check if we need a line break for various reasons:
+            # - Would adding this word exceed the max chars?
+            # - Is this a good word to start a new line?
+            # - Break after commas if line is getting long
+            if i > 0 and (
+                current_line_chars + 1 + word_len > self.max_chars_per_line
+                or (
                     current_line_chars > self.max_chars_per_line * 0.5
                     and word.text.lower() in self.LINE_START_WORDS
-                ):
-                    needs_break = True
-                # Break after commas if line is getting long
-                elif (
+                )
+                or (
                     current_line_chars > self.max_chars_per_line * 0.6
-                    and i > 0
                     and words[i - 1].text.endswith(",")
-                ):
-                    needs_break = True
+                )
+            ):
+                needs_break = True
 
             caption_word = CaptionWord(
                 text=word.text,

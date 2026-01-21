@@ -29,13 +29,13 @@ class CaptionStylizer:
     # POS tags and their font size multipliers (for variation)
     # More dramatic variation for visual impact
     POS_FONT_MULTIPLIERS = {
-        "PROPN": 1.3,    # Proper nouns (names) - larger
-        "NOUN": 1.2,     # Nouns - larger
-        "VERB": 1.15,    # Verbs - medium-large
-        "ADJ": 1.2,      # Adjectives - larger
-        "ADV": 1.1,      # Adverbs - slightly larger
-        "INTJ": 1.4,     # Interjections (wow, oh) - much larger
-        "NUM": 1.15,     # Numbers - medium-large
+        "PROPN": 1.3,  # Proper nouns (names) - larger
+        "NOUN": 1.2,  # Nouns - larger
+        "VERB": 1.15,  # Verbs - medium-large
+        "ADJ": 1.2,  # Adjectives - larger
+        "ADV": 1.1,  # Adverbs - slightly larger
+        "INTJ": 1.4,  # Interjections (wow, oh) - much larger
+        "NUM": 1.15,  # Numbers - medium-large
     }
 
     # Default position - center of screen
@@ -130,8 +130,7 @@ class CaptionStylizer:
 
         # Use center position
         position = CaptionPositionCoords(
-            x=self.DEFAULT_POSITION["x"],
-            y=self.DEFAULT_POSITION["y"]
+            x=self.DEFAULT_POSITION["x"], y=self.DEFAULT_POSITION["y"]
         )
 
         # Create new caption with styling
@@ -189,9 +188,7 @@ class CaptionStylizer:
 
             # Check if this word is in emphasis list
             clean_word = word.text.lower().rstrip(".,!?")
-            is_emphasized = any(
-                e.lower() == clean_word for e in emphasis
-            )
+            is_emphasized = any(e.lower() == clean_word for e in emphasis)
 
             if is_emphasized:
                 # Emphasized words get a dramatic size boost
@@ -259,7 +256,6 @@ class CaptionStylizer:
 
         # Limit to 1-2 emphasis words per caption for clean look
         return emphasis[:2]
-
 
     def _select_style(
         self,

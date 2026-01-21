@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import tempfile
 import time
 import uuid
@@ -10,7 +9,6 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioProcessor
 from .captions import CaptionSegmenter, CaptionStylizer
@@ -44,8 +42,7 @@ caption_stylizer: CaptionStylizer | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global audio_processor, whisper_service, caption_segmenter, \
-        caption_stylizer
+    global audio_processor, whisper_service, caption_segmenter, caption_stylizer
 
     logger.info("Initializing Steno API services...")
 
@@ -56,8 +53,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize services
     audio_processor = AudioProcessor()
-    whisper_service = \
-        WhisperService(model_name=os.getenv("WHISPER_MODEL", "small"))
+    whisper_service = WhisperService(model_name=os.getenv("WHISPER_MODEL", "small"))
     caption_segmenter = CaptionSegmenter()
     caption_stylizer = CaptionStylizer()
 
@@ -98,8 +94,7 @@ async def health_check():
 @app.post("/api/transcribe", response_model=TranscribeResponse)
 async def transcribe_video(
     file: UploadFile = File(..., description="Video file to transcribe"),
-    language: str | None =
-        Form(None, description="Language hint (e.g., 'en')"),
+    language: str | None = Form(None, description="Language hint (e.g., 'en')"),
 ):
     """Transcribe a video file and return word-level timestamps.
 
@@ -155,8 +150,6 @@ async def transcribe_video(
             os.unlink(tmp_video_path)
         if audio_path and os.path.exists(audio_path):
             os.unlink(audio_path)
-
-
 
 
 @app.post("/api/captions", response_model=GenerateCaptionsResponse)
