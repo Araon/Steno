@@ -73,12 +73,12 @@ htmlcov/
 .pytest_cache/
 
 # Media files (uncomment if you don't want to track these)
-# *.mp4
-# *.mp3
-# *.wav
-# *.avi
-# *.mov
-# *.mkv
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+*.mkv
 
 # Whisper models (large files)
 *.pt
