@@ -182,7 +182,6 @@ class ProcessResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Health check response."""
-
     status: str = Field(default="ok", description="Service status")
     version: str = Field(default="0.1.0", description="API version")
+    uptime: float = Field(default=0, description="Uptime in seconds")

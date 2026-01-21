@@ -1,5 +1,3 @@
-"""FastAPI application for Steno API."""
-
 import logging
 import os
 import tempfile
@@ -15,12 +13,10 @@ from .audio import AudioProcessor
 from .captions import CaptionSegmenter, CaptionStylizer
 from .models import (
     CaptionAnimation,
-    Captions,
     GenerateCaptionsRequest,
     GenerateCaptionsResponse,
     HealthResponse,
     ProcessResponse,
-    Transcript,
     TranscribeResponse,
 )
 from .transcription import WhisperService
@@ -32,7 +28,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global services (initialized on startup)
 audio_processor: Optional[AudioProcessor] = None
 whisper_service: Optional[WhisperService] = None
 caption_segmenter: Optional[CaptionSegmenter] = None
@@ -41,8 +36,8 @@ caption_stylizer: Optional[CaptionStylizer] = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan - initialize services on startup."""
-    global audio_processor, whisper_service, caption_segmenter, caption_stylizer
+    global audio_processor, whisper_service, caption_segmenter, \
+        caption_stylizer
 
     logger.info("Initializing Steno API services...")
 
@@ -79,20 +74,9 @@ app.add_middleware(
 )
 
 
-# ============================================
-# Health Check
-# ============================================
-
-
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint."""
     return HealthResponse(status="ok", version="0.1.0")
-
-
-# ============================================
-# Transcription Endpoint
-# ============================================
 
 
 @app.post("/api/transcribe", response_model=TranscribeResponse)

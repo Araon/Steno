@@ -36,6 +36,31 @@ pipenv run start
 pipenv run uvicorn src.main:app --reload --port 8000
 ```
 
+## Linting & Formatting
+
+This project uses `ruff` (a fast Python linter) and `black` (code formatter) instead of flake8.
+
+```bash
+# Check for linting issues
+pipenv run lint
+
+# Auto-fix linting issues (replaces flake8)
+pipenv run lint-fix
+
+# Format code with black
+pipenv run format
+
+# Check formatting without making changes
+pipenv run format-check
+```
+
+**Note:** `ruff` can auto-fix most flake8-style errors. Run `pipenv run lint-fix` to automatically fix issues like:
+- Unused imports
+- Line length issues
+- Import sorting
+- Code style violations
+- And many more!
+
 ## API Endpoints
 
 - `POST /api/transcribe` - Upload video, get word-level transcript
