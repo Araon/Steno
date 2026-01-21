@@ -2,118 +2,51 @@
 
 Local-first video captioning with lyric-style kinetic typography.
 
-## Overview
-
-Steno takes vlog-style videos (talking to camera), transcribes the speech, and overlays **lyric-style, kinetic typography captions** (Instagram-like) on the video.
+Takes vlog-style videos, transcribes speech with word-level timestamps, and overlays Instagram-style animated captions on the video.
 
 ## Features
 
-- Import MP4 video
-- Extract audio and transcribe with word-level timestamps
-- Segment transcript into short, lyric-style phrases
-- Emphasize key words (font size / weight changes)
-- Animate captions (scale-in, fade-in, word-by-word reveal)
+- Word-level transcription with Whisper
+- Automatic caption segmentation into lyric-style phrases
+- Key word emphasis (font size/weight changes)
+- Multiple animations (scale-in, fade-in, word-by-word)
 - Preview captions over video
-- Export final MP4 (9:16 and 16:9)
+- Export MP4 in 9:16 and 16:9 aspect ratios
 
-## Tech Stack
+## Setup
 
-**Frontend / Renderer**
-- TypeScript, React, Remotion
-- Tailwind CSS, Zustand, Vite
+**Prerequisites:**
+- Node.js >= 18, pnpm >= 9
+- Python >= 3.11, FFmpeg
 
-**Backend Intelligence**
-- Python 3.11, FastAPI
-- Whisper (word-level timestamps)
-- FFmpeg + pydub (audio)
-- spaCy (light NLP)
-
-## Project Structure
-
-```
-apps/
-  web/        # Editor + preview UI (React + Vite)
-  renderer/   # Remotion compositions (video rendering)
-  api/        # Python ASR + caption intelligence (FastAPI)
-
-packages/
-  contracts/  # JSON schemas and TypeScript types
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm >= 9
-- Python >= 3.11
-- FFmpeg installed on system
-
-#### Installing FFmpeg
-
-**Ubuntu/Debian:**
+**Install:**
 ```bash
-sudo apt-get update
-sudo apt-get install ffmpeg
-```
-
-**macOS:**
-```bash
-brew install ffmpeg
-```
-
-**Windows:**
-- Download from [FFmpeg official website](https://ffmpeg.org/download.html)
-- Or use package managers like `choco install ffmpeg` or `scoop install ffmpeg`
-
-**Verify installation:**
-```bash
-ffmpeg -version
-```
-
-### Installation
-
-```bash
-# Install Node.js dependencies
 pnpm install
-
-# Set up Python API (requires pipenv)
-pip install pipenv
 cd apps/api
+pip install pipenv
 pipenv install
 pipenv run python -m spacy download en_core_web_sm
 ```
 
-### Development
+## Usage
 
 ```bash
 # Start all services
 pnpm dev
 
-# Or start individually
-pnpm dev:web      # Web UI at http://localhost:5173
+# Or individually
+pnpm dev:web      # http://localhost:5173
 pnpm dev:renderer # Remotion preview
-pnpm dev:api      # Python API at http://localhost:8000
+pnpm dev:api      # http://localhost:8000
 ```
 
-### Building
+## Tech Stack
 
-```bash
-pnpm build
-```
+- **Frontend**: TypeScript, React, Remotion, Tailwind, Zustand
+- **Backend**: Python 3.11, FastAPI, Whisper, FFmpeg, spaCy
 
 ## Architecture
 
-The system uses **JSON contracts** as the boundary between Python and TypeScript:
-
-1. **Transcript Contract**: Word-level transcription with timestamps
-2. **Captions Contract**: Segmented phrases with emphasis, style, and animation
-
-This separation allows:
-- Transcription/NLP backend to be swappable
-- Rendering to be deterministic and testable
-- UI to be independent of backend implementation
-
-## License
-
-MIT
+JSON contracts separate Python (transcription/NLP) from TypeScript (rendering):
+- **Transcript Contract**: Word-level transcription with timestamps
+- **Captions Contract**: Segmented phrases with emphasis, style, animation
