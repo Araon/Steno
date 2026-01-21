@@ -97,7 +97,7 @@ class Caption(BaseModel):
     )
     position: CaptionPositionPreset | CaptionPositionCoords = Field(
         default_factory=lambda: CaptionPositionCoords(x=50, y=50),
-        description="Position - preset or freeform coordinates"
+        description="Position - preset or freeform coordinates",
     )
     maxCharsPerLine: int | None = Field(
         default=None, description="Maximum characters per line for wrapping"
