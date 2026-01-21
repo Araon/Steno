@@ -5,7 +5,15 @@ import logging
 import spacy
 from spacy.language import Language
 
-from ..models import Caption, CaptionAnimation, Captions, CaptionSettings, CaptionStyle
+from ..models import (
+    Caption,
+    CaptionAnimation,
+    CaptionPositionCoords,
+    Captions,
+    CaptionSettings,
+    CaptionStyle,
+    CaptionWord,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +26,23 @@ class CaptionStylizer:
     # POS tags for words that are good candidates for emphasis
     EMPHASIS_POS_TAGS = {"NOUN", "VERB", "ADJ", "ADV", "PROPN"}
 
-    # Animation variety - cycle through these for visual interest
-    ANIMATION_CYCLE = [
-        CaptionAnimation.SCALE_IN,
-        CaptionAnimation.FADE_IN,
-        CaptionAnimation.WORD_BY_WORD,
-    ]
+    # POS tags and their font size multipliers (for variation)
+    # More dramatic variation for visual impact
+    POS_FONT_MULTIPLIERS = {
+        "PROPN": 1.3,    # Proper nouns (names) - larger
+        "NOUN": 1.2,     # Nouns - larger
+        "VERB": 1.15,    # Verbs - medium-large
+        "ADJ": 1.2,      # Adjectives - larger
+        "ADV": 1.1,      # Adverbs - slightly larger
+        "INTJ": 1.4,     # Interjections (wow, oh) - much larger
+        "NUM": 1.15,     # Numbers - medium-large
+    }
+
+    # Default position - center of screen
+    DEFAULT_POSITION = {"x": 50, "y": 50}
+
+    # Single animation style - word by word reveal
+    DEFAULT_ANIMATION = CaptionAnimation.WORD_BY_WORD
 
     def __init__(self, model_name: str | None = None):
         """Initialize the caption stylizer.
@@ -51,14 +70,12 @@ class CaptionStylizer:
     def stylize(
         self,
         captions: list[Caption],
-        vary_animations: bool = True,
         emphasize_keywords: bool = True,
     ) -> Captions:
         """Apply styles and emphasis to a list of captions.
 
         Args:
             captions: List of Caption objects to stylize.
-            vary_animations: Whether to vary animations for visual interest.
             emphasize_keywords: Whether to identify and mark emphasis words.
 
         Returns:
@@ -71,7 +88,6 @@ class CaptionStylizer:
             styled = self._stylize_caption(
                 caption=caption,
                 index=i,
-                vary_animations=vary_animations,
                 emphasize_keywords=emphasize_keywords,
             )
             styled_captions.append(styled)
@@ -86,15 +102,13 @@ class CaptionStylizer:
         self,
         caption: Caption,
         index: int,
-        vary_animations: bool,
         emphasize_keywords: bool,
     ) -> Caption:
         """Apply styling to a single caption.
 
         Args:
             caption: Caption to style.
-            index: Caption index (for animation cycling).
-            vary_animations: Whether to vary animations.
+            index: Caption index.
             emphasize_keywords: Whether to add emphasis.
 
         Returns:
@@ -105,13 +119,20 @@ class CaptionStylizer:
         if emphasize_keywords:
             emphasis = self._find_emphasis_words(caption)
 
-        # Select animation
-        animation = caption.animation
-        if vary_animations:
-            animation = self._select_animation(index)
+        # Apply font size variation to words
+        styled_words = self._apply_font_size_variation(caption, emphasis)
+
+        # Always use word-by-word animation
+        animation = self.DEFAULT_ANIMATION
 
         # Select style based on content
         style = self._select_style(caption, emphasis)
+
+        # Use center position
+        position = CaptionPositionCoords(
+            x=self.DEFAULT_POSITION["x"],
+            y=self.DEFAULT_POSITION["y"]
+        )
 
         # Create new caption with styling
         return Caption(
@@ -119,12 +140,85 @@ class CaptionStylizer:
             text=caption.text,
             start=caption.start,
             end=caption.end,
-            words=caption.words,
+            words=styled_words,
             emphasis=emphasis,
             style=style,
             animation=animation,
-            position=caption.position,
+            position=position,
+            maxCharsPerLine=caption.maxCharsPerLine,
+            lineCount=caption.lineCount,
         )
+
+    def _apply_font_size_variation(
+        self,
+        caption: Caption,
+        emphasis: list[str],
+    ) -> list[CaptionWord]:
+        """Apply font size variation to words based on POS and emphasis.
+
+        Args:
+            caption: Caption with words to style.
+            emphasis: List of emphasized words.
+
+        Returns:
+            List of CaptionWord with fontSizeMultiplier set.
+        """
+        if not caption.words:
+            return []
+
+        # Analyze with spaCy
+        doc = self.nlp(caption.text)
+
+        # Create a mapping of word positions to POS tags
+        word_pos_map: dict[int, str] = {}
+        doc_word_idx = 0
+        for i, word in enumerate(caption.words):
+            # Find matching token in spaCy doc
+            for j in range(doc_word_idx, len(doc)):
+                token = doc[j]
+                if token.text.lower() == word.text.lower().rstrip(".,!?"):
+                    word_pos_map[i] = token.pos_
+                    doc_word_idx = j + 1
+                    break
+
+        styled_words = []
+        num_words = len(caption.words)
+
+        for i, word in enumerate(caption.words):
+            multiplier = 1.0
+
+            # Check if this word is in emphasis list
+            clean_word = word.text.lower().rstrip(".,!?")
+            is_emphasized = any(
+                e.lower() == clean_word for e in emphasis
+            )
+
+            if is_emphasized:
+                # Emphasized words get a dramatic size boost
+                multiplier = 1.4
+            else:
+                # Apply POS-based variation
+                pos = word_pos_map.get(i, "")
+                if pos in self.POS_FONT_MULTIPLIERS:
+                    multiplier = self.POS_FONT_MULTIPLIERS[pos]
+
+            # First and last words of caption get a slight boost
+            if num_words > 2:
+                if i == 0:
+                    multiplier = max(multiplier, 1.05)
+                elif i == num_words - 1:
+                    multiplier = max(multiplier, 1.1)
+
+            styled_word = CaptionWord(
+                text=word.text,
+                start=word.start,
+                end=word.end,
+                fontSizeMultiplier=multiplier if multiplier != 1.0 else None,
+                lineBreakBefore=word.lineBreakBefore,
+            )
+            styled_words.append(styled_word)
+
+        return styled_words
 
     def _find_emphasis_words(self, caption: Caption) -> list[str]:
         """Find words to emphasize in a caption.
@@ -166,18 +260,6 @@ class CaptionStylizer:
         # Limit to 1-2 emphasis words per caption for clean look
         return emphasis[:2]
 
-    def _select_animation(self, index: int) -> CaptionAnimation:
-        """Select animation based on caption index.
-
-        Cycles through animations for visual variety.
-
-        Args:
-            index: Caption index.
-
-        Returns:
-            Selected animation.
-        """
-        return self.ANIMATION_CYCLE[index % len(self.ANIMATION_CYCLE)]
 
     def _select_style(
         self,

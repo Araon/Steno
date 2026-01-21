@@ -1,12 +1,16 @@
 import logging
 import os
+import shutil
 import tempfile
 import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .audio import AudioProcessor
 from .captions import CaptionSegmenter, CaptionStylizer
@@ -27,6 +31,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Storage configuration
+STORAGE_DIR = Path(os.getenv("STENO_STORAGE_DIR", "./storage"))
+VIDEO_STORAGE_DIR = STORAGE_DIR / "videos"
+RENDER_OUTPUT_DIR = STORAGE_DIR / "renders"
+
 audio_processor: AudioProcessor | None = None
 whisper_service: WhisperService | None = None
 caption_segmenter: CaptionSegmenter | None = None
@@ -40,10 +49,15 @@ async def lifespan(app: FastAPI):
 
     logger.info("Initializing Steno API services...")
 
+    # Create storage directories
+    VIDEO_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    RENDER_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Storage directories created: {STORAGE_DIR}")
+
     # Initialize services
     audio_processor = AudioProcessor()
     whisper_service = \
-        WhisperService(model_name=os.getenv("WHISPER_MODEL", "base"))
+        WhisperService(model_name=os.getenv("WHISPER_MODEL", "small"))
     caption_segmenter = CaptionSegmenter()
     caption_stylizer = CaptionStylizer()
 
@@ -197,6 +211,7 @@ async def process_video(
     """End-to-end processing: video → transcript → captions.
 
     Combines transcription and caption generation in a single request.
+    Stores the video for later rendering.
     """
     if not audio_processor or not whisper_service:
         raise HTTPException(status_code=503, detail="Services not initialized")
@@ -223,17 +238,24 @@ async def process_video(
     except ValueError:
         animation = CaptionAnimation.SCALE_IN
 
-    # Save uploaded file to temp location
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_video:
-        content = await file.read()
-        tmp_video.write(content)
-        tmp_video_path = tmp_video.name
+    # Generate unique video ID and save to storage
+    video_id = str(uuid.uuid4())
+    video_path = VIDEO_STORAGE_DIR / f"{video_id}{ext}"
+
+    # Save uploaded file to storage
+    content = await file.read()
+    with open(video_path, "wb") as f:
+        f.write(content)
 
     audio_path = None
     try:
         # Extract audio
         logger.info(f"Processing uploaded file: {file.filename}")
-        audio_path = audio_processor.extract_audio(tmp_video_path)
+        logger.info(f"Stored video with ID: {video_id}")
+        audio_path = audio_processor.extract_audio(str(video_path))
+
+        # Get video duration
+        video_duration = audio_processor.get_duration(str(video_path))
 
         # Transcribe
         transcript = whisper_service.transcribe(audio_path, language=language)
@@ -256,18 +278,80 @@ async def process_video(
             transcript=transcript,
             captions=captions,
             processingTime=processing_time,
+            videoId=video_id,
+            videoDuration=video_duration,
         )
 
     except FileNotFoundError as e:
+        # Clean up stored video on error
+        if video_path.exists():
+            video_path.unlink()
         raise HTTPException(status_code=404, detail=str(e)) from e
     except RuntimeError as e:
+        # Clean up stored video on error
+        if video_path.exists():
+            video_path.unlink()
         raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
-        # Cleanup temp files
-        if os.path.exists(tmp_video_path):
-            os.unlink(tmp_video_path)
+        # Cleanup audio temp file (but keep the video!)
         if audio_path and os.path.exists(audio_path):
             os.unlink(audio_path)
+
+
+# ============================================
+# Video Storage Endpoints
+# ============================================
+
+
+@app.get("/api/videos/{video_id}")
+async def get_video(video_id: str):
+    """Serve a stored video file.
+
+    Args:
+        video_id: The video ID returned from the process endpoint.
+    """
+    # Find the video file (could have different extensions)
+    video_files = list(VIDEO_STORAGE_DIR.glob(f"{video_id}.*"))
+    if not video_files:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    video_path = video_files[0]
+    return FileResponse(
+        path=video_path,
+        media_type="video/mp4",
+        filename=video_path.name,
+    )
+
+
+@app.delete("/api/videos/{video_id}")
+async def delete_video(video_id: str):
+    """Delete a stored video file.
+
+    Args:
+        video_id: The video ID to delete.
+    """
+    video_files = list(VIDEO_STORAGE_DIR.glob(f"{video_id}.*"))
+    if not video_files:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    for video_file in video_files:
+        video_file.unlink()
+
+    logger.info(f"Deleted video: {video_id}")
+    return {"status": "deleted", "videoId": video_id}
+
+
+def get_video_path(video_id: str) -> Path | None:
+    """Get the path to a stored video by ID.
+
+    Args:
+        video_id: The video ID.
+
+    Returns:
+        Path to the video file, or None if not found.
+    """
+    video_files = list(VIDEO_STORAGE_DIR.glob(f"{video_id}.*"))
+    return video_files[0] if video_files else None
 
 
 # ============================================

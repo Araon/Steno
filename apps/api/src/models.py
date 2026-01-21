@@ -27,12 +27,23 @@ class CaptionAnimation(str, Enum):
     TYPEWRITER = "typewriter"
 
 
-class CaptionPosition(str, Enum):
-    """Vertical position on screen."""
+class CaptionPositionPreset(str, Enum):
+    """Position presets on screen."""
 
     TOP = "top"
     CENTER = "center"
     BOTTOM = "bottom"
+    TOP_LEFT = "top-left"
+    TOP_RIGHT = "top-right"
+    BOTTOM_LEFT = "bottom-left"
+    BOTTOM_RIGHT = "bottom-right"
+
+
+class CaptionPositionCoords(BaseModel):
+    """Freeform position with x/y coordinates (percentage-based, 0-100)."""
+
+    x: float = Field(..., ge=0, le=100, description="X position as percentage")
+    y: float = Field(..., ge=0, le=100, description="Y position as percentage")
 
 
 class TranscriptWord(BaseModel):
@@ -63,6 +74,12 @@ class CaptionWord(BaseModel):
     text: str = Field(..., description="The word text")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
+    fontSizeMultiplier: float | None = Field(
+        default=None, description="Font size multiplier for this word"
+    )
+    lineBreakBefore: bool | None = Field(
+        default=None, description="Whether this word starts a new line"
+    )
 
 
 class Caption(BaseModel):
@@ -78,8 +95,15 @@ class Caption(BaseModel):
     animation: CaptionAnimation = Field(
         default=CaptionAnimation.SCALE_IN, description="Animation type"
     )
-    position: CaptionPosition = Field(
-        default=CaptionPosition.CENTER, description="Vertical position"
+    position: CaptionPositionPreset | CaptionPositionCoords = Field(
+        default_factory=lambda: CaptionPositionCoords(x=50, y=50),
+        description="Position - preset or freeform coordinates"
+    )
+    maxCharsPerLine: int | None = Field(
+        default=None, description="Maximum characters per line for wrapping"
+    )
+    lineCount: int | None = Field(
+        default=None, description="Number of lines this caption spans"
     )
 
 
@@ -94,6 +118,10 @@ class CaptionSettings(BaseModel):
     emphasisScale: float = Field(
         default=1.2, description="Scale factor for emphasized words"
     )
+    maxCharsPerLine: int = Field(
+        default=30, description="Maximum characters per line for wrapping"
+    )
+    lineHeight: float = Field(default=1.3, description="Line height multiplier")
 
 
 class Captions(BaseModel):
@@ -155,6 +183,12 @@ class ProcessResponse(BaseModel):
     processing_time: float = Field(
         ..., alias="processingTime", description="Total processing time in milliseconds"
     )
+    video_id: str = Field(
+        ..., alias="videoId", description="Video ID for the stored video"
+    )
+    video_duration: float = Field(
+        ..., alias="videoDuration", description="Video duration in seconds"
+    )
 
     class Config:
         populate_by_name = True
@@ -164,3 +198,37 @@ class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service status")
     version: str = Field(default="0.1.0", description="API version")
     uptime: float = Field(default=0, description="Uptime in seconds")
+
+
+# ============================================
+# Render API Models
+# ============================================
+
+
+class RenderRequest(BaseModel):
+    """Render request."""
+
+    video_id: str = Field(..., alias="videoId", description="Video ID")
+    captions: Captions = Field(..., description="Captions to overlay")
+    aspect_ratio: str = Field(
+        default="9:16", alias="aspectRatio", description="Target aspect ratio"
+    )
+    quality: int = Field(default=80, ge=0, le=100, description="Output quality")
+
+    class Config:
+        populate_by_name = True
+
+
+class RenderProgress(BaseModel):
+    """Render progress response."""
+
+    job_id: str = Field(..., alias="jobId", description="Render job ID")
+    status: str = Field(..., description="Current status")
+    progress: int = Field(default=0, ge=0, le=100, description="Progress percentage")
+    error: str | None = Field(default=None, description="Error message if failed")
+    output_url: str | None = Field(
+        default=None, alias="outputUrl", description="Output video URL when complete"
+    )
+
+    class Config:
+        populate_by_name = True

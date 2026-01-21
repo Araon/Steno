@@ -154,6 +154,18 @@ class AudioProcessor:
             logger.error(f"Error getting audio duration: {e}")
             raise RuntimeError(f"Failed to get audio duration: {e}") from e
 
+    def get_duration(self, video_path: str | Path) -> float:
+        """Get the duration of a video file in seconds.
+
+        Args:
+            video_path: Path to the video file.
+
+        Returns:
+            Duration in seconds.
+        """
+        metadata = self.get_video_metadata(video_path)
+        return metadata.get("duration", 0.0)
+
     def get_video_metadata(self, video_path: str | Path) -> dict:
         """Get metadata from a video file.
 

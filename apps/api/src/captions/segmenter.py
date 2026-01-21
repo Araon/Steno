@@ -9,7 +9,7 @@ from spacy.language import Language
 from ..models import (
     Caption,
     CaptionAnimation,
-    CaptionPosition,
+    CaptionPositionCoords,
     CaptionStyle,
     CaptionWord,
     Transcript,
@@ -25,15 +25,21 @@ class CaptionSegmenter:
     DEFAULT_MODEL = "en_core_web_sm"
     DEFAULT_MAX_WORDS = 4
     DEFAULT_MIN_WORDS = 2
+    DEFAULT_MAX_CHARS_PER_LINE = 30
 
-    # Pause threshold in seconds - if gap between words is larger, start new caption
+    # Pause threshold in seconds - if gap between words is larger, start new
+    # caption
     PAUSE_THRESHOLD = 0.5
+
+    # Words that are better at the start of a line
+    LINE_START_WORDS = {"and", "but", "or", "so", "then", "when", "if", "that"}
 
     def __init__(
         self,
         model_name: str | None = None,
         max_words_per_caption: int = DEFAULT_MAX_WORDS,
         min_words_per_caption: int = DEFAULT_MIN_WORDS,
+        max_chars_per_line: int = DEFAULT_MAX_CHARS_PER_LINE,
     ):
         """Initialize the caption segmenter.
 
@@ -41,10 +47,12 @@ class CaptionSegmenter:
             model_name: spaCy model to use. Defaults to "en_core_web_sm".
             max_words_per_caption: Maximum words per caption segment.
             min_words_per_caption: Minimum words per caption (soft limit).
+            max_chars_per_line: Maximum characters per line for wrapping.
         """
         self.model_name = model_name or self.DEFAULT_MODEL
         self.max_words = max_words_per_caption
         self.min_words = min_words_per_caption
+        self.max_chars_per_line = max_chars_per_line
         self._nlp: Language | None = None
 
     @property
@@ -218,18 +226,16 @@ class CaptionSegmenter:
         Returns:
             Caption object.
         """
-        # Convert to CaptionWord objects
-        caption_words = [
-            CaptionWord(
-                text=w.text,
-                start=w.start,
-                end=w.end,
-            )
-            for w in words
-        ]
+        # Apply line wrapping and convert to CaptionWord objects
+        caption_words = self._apply_line_wrapping(words)
 
         # Build full text
         text = " ".join(w.text for w in words)
+
+        # Count lines
+        line_count = 1 + sum(
+            1 for w in caption_words if w.lineBreakBefore
+        )
 
         # Get timing
         start = words[0].start
@@ -244,8 +250,66 @@ class CaptionSegmenter:
             emphasis=[],  # Will be filled by stylizer
             style=CaptionStyle.NORMAL,
             animation=default_animation,
-            position=CaptionPosition.CENTER,
+            position=CaptionPositionCoords(x=50, y=50),  # Center by default
+            maxCharsPerLine=self.max_chars_per_line,
+            lineCount=line_count,
         )
+
+    def _apply_line_wrapping(
+        self,
+        words: list[TranscriptWord],
+    ) -> list[CaptionWord]:
+        """Apply intelligent line wrapping to words.
+
+        Args:
+            words: List of transcript words.
+
+        Returns:
+            List of CaptionWord objects with lineBreakBefore set.
+        """
+        if not words:
+            return []
+
+        caption_words: list[CaptionWord] = []
+        current_line_chars = 0
+
+        for i, word in enumerate(words):
+            # Check if we need a line break before this word
+            word_len = len(word.text)
+            needs_break = False
+
+            if i > 0:
+                # Would adding this word exceed the max chars?
+                if current_line_chars + 1 + word_len > self.max_chars_per_line:
+                    needs_break = True
+                # Is this a good word to start a new line?
+                elif (
+                    current_line_chars > self.max_chars_per_line * 0.5
+                    and word.text.lower() in self.LINE_START_WORDS
+                ):
+                    needs_break = True
+                # Break after commas if line is getting long
+                elif (
+                    current_line_chars > self.max_chars_per_line * 0.6
+                    and i > 0
+                    and words[i - 1].text.endswith(",")
+                ):
+                    needs_break = True
+
+            caption_word = CaptionWord(
+                text=word.text,
+                start=word.start,
+                end=word.end,
+                lineBreakBefore=needs_break if needs_break else None,
+            )
+            caption_words.append(caption_word)
+
+            if needs_break:
+                current_line_chars = word_len
+            else:
+                current_line_chars += (1 if i > 0 else 0) + word_len
+
+        return caption_words
 
     def get_word_pos_tags(self, text: str) -> list[tuple[str, str]]:
         """Get part-of-speech tags for words in text.
