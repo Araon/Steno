@@ -7,6 +7,8 @@ export type {
   CaptionStyle,
   CaptionAnimation,
   CaptionPosition,
+  CaptionPositionPreset,
+  CaptionPositionCoords,
   CaptionWord,
   Caption,
   CaptionSettings,
@@ -22,12 +24,24 @@ export type {
   GenerateCaptionsResponse,
   ProcessRequest,
   ProcessResponse,
+  // Render API
+  RenderRequest,
+  RenderStatus,
+  RenderProgress,
+  RenderResponse,
 } from './types';
 
 // Default values
 export {
   DEFAULT_CAPTION_SETTINGS,
   DEFAULT_CAPTION,
+} from './types';
+
+// Helper functions
+export {
+  isPositionPreset,
+  isPositionCoords,
+  presetToCoords,
 } from './types';
 
 // Re-export schemas as JSON paths for runtime validation

@@ -40,8 +40,22 @@ export type CaptionStyle = 'normal' | 'bold' | 'italic' | 'highlight';
 /** Animation type for captions */
 export type CaptionAnimation = 'none' | 'fade-in' | 'scale-in' | 'word-by-word' | 'typewriter';
 
-/** Vertical position on screen */
-export type CaptionPosition = 'top' | 'center' | 'bottom';
+/** Legacy vertical position presets */
+export type CaptionPositionPreset = 'top' | 'center' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+/**
+ * Freeform position with x/y coordinates (percentage-based, 0-100)
+ * Origin is top-left corner of the video
+ */
+export interface CaptionPositionCoords {
+  /** X position as percentage (0 = left, 50 = center, 100 = right) */
+  x: number;
+  /** Y position as percentage (0 = top, 50 = center, 100 = bottom) */
+  y: number;
+}
+
+/** Position can be a preset string or freeform coordinates */
+export type CaptionPosition = CaptionPositionPreset | CaptionPositionCoords;
 
 /**
  * A word within a caption segment
@@ -53,6 +67,10 @@ export interface CaptionWord {
   start: number;
   /** End time in seconds */
   end: number;
+  /** Font size multiplier for this word (1.0 = base size) */
+  fontSizeMultiplier?: number;
+  /** Whether this word starts a new line */
+  lineBreakBefore?: boolean;
 }
 
 /**
@@ -75,8 +93,12 @@ export interface Caption {
   style: CaptionStyle;
   /** Animation type */
   animation: CaptionAnimation;
-  /** Vertical position */
+  /** Position - can be a preset or freeform x/y coordinates */
   position: CaptionPosition;
+  /** Maximum characters per line for wrapping (optional) */
+  maxCharsPerLine?: number;
+  /** Number of lines this caption spans */
+  lineCount?: number;
 }
 
 /**
@@ -95,6 +117,10 @@ export interface CaptionSettings {
   backgroundColor: string;
   /** Scale factor for emphasized words */
   emphasisScale: number;
+  /** Maximum characters per line (for line wrapping) */
+  maxCharsPerLine: number;
+  /** Line height multiplier */
+  lineHeight: number;
 }
 
 /**
@@ -120,14 +146,55 @@ export const DEFAULT_CAPTION_SETTINGS: CaptionSettings = {
   color: '#FFFFFF',
   backgroundColor: 'transparent',
   emphasisScale: 1.2,
+  maxCharsPerLine: 30,
+  lineHeight: 1.3,
 };
 
 export const DEFAULT_CAPTION: Omit<Caption, 'id' | 'text' | 'start' | 'end' | 'words'> = {
   emphasis: [],
   style: 'normal',
   animation: 'scale-in',
-  position: 'center',
+  position: { x: 50, y: 50 },  // Center by default
+  lineCount: 1,
 };
+
+/**
+ * Helper to check if position is a preset string
+ */
+export function isPositionPreset(position: CaptionPosition): position is CaptionPositionPreset {
+  return typeof position === 'string';
+}
+
+/**
+ * Helper to check if position is coordinates
+ */
+export function isPositionCoords(position: CaptionPosition): position is CaptionPositionCoords {
+  return typeof position === 'object' && 'x' in position && 'y' in position;
+}
+
+/**
+ * Convert preset position to coordinates
+ */
+export function presetToCoords(preset: CaptionPositionPreset): CaptionPositionCoords {
+  switch (preset) {
+    case 'top':
+      return { x: 50, y: 15 };
+    case 'top-left':
+      return { x: 15, y: 15 };
+    case 'top-right':
+      return { x: 85, y: 15 };
+    case 'center':
+      return { x: 50, y: 50 };
+    case 'bottom':
+      return { x: 50, y: 85 };
+    case 'bottom-left':
+      return { x: 15, y: 85 };
+    case 'bottom-right':
+      return { x: 85, y: 85 };
+    default:
+      return { x: 50, y: 50 };
+  }
+}
 
 // ============================================
 // Utility Types
@@ -239,4 +306,57 @@ export interface ProcessResponse {
   captions: Captions;
   /** Total processing time in milliseconds */
   processingTime: number;
+  /** Video ID for the stored video (used for rendering) */
+  videoId: string;
+  /** Video duration in seconds */
+  videoDuration: number;
+}
+
+// ============================================
+// Render API Types
+// ============================================
+
+/**
+ * Render request
+ */
+export interface RenderRequest {
+  /** Video ID returned from process endpoint */
+  videoId: string;
+  /** Captions to overlay */
+  captions: Captions;
+  /** Target aspect ratio */
+  aspectRatio: AspectRatio;
+  /** Output quality (0-100) */
+  quality?: number;
+}
+
+/**
+ * Render status
+ */
+export type RenderStatus = 'pending' | 'rendering' | 'complete' | 'error';
+
+/**
+ * Render progress response
+ */
+export interface RenderProgress {
+  /** Render job ID */
+  jobId: string;
+  /** Current status */
+  status: RenderStatus;
+  /** Progress percentage (0-100) */
+  progress: number;
+  /** Error message if status is error */
+  error?: string;
+  /** Output video URL when complete */
+  outputUrl?: string;
+}
+
+/**
+ * Render response (initial)
+ */
+export interface RenderResponse {
+  /** Render job ID */
+  jobId: string;
+  /** Initial status */
+  status: RenderStatus;
 }
