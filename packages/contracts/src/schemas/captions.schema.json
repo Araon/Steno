@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://steno.local/schemas/captions.schema.json",
+  "title": "Captions",
+  "description": "Segmented caption groups with styling and animation",
+  "type": "object",
+  "required": ["captions", "version"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "const": "1.0"
+    },
+    "captions": {
+      "type": "array",
+      "description": "Array of caption segments",
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "start", "end", "words"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the caption"
+          },
+          "text": {
+            "type": "string",
+            "description": "Full text of the caption segment"
+          },
+          "start": {
+            "type": "number",
+            "description": "Start time in seconds",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "description": "End time in seconds",
+            "minimum": 0
+          },
+          "words": {
+            "type": "array",
+            "description": "Individual words with timing",
+            "items": {
+              "type": "object",
+              "required": ["text", "start", "end"],
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "emphasis": {
+            "type": "array",
+            "description": "Words to emphasize (by index or text)",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "style": {
+            "type": "string",
+            "description": "Visual style for the caption",
+            "enum": ["normal", "bold", "italic", "highlight"],
+            "default": "normal"
+          },
+          "animation": {
+            "type": "string",
+            "description": "Animation type for the caption",
+            "enum": ["none", "fade-in", "scale-in", "word-by-word", "typewriter"],
+            "default": "scale-in"
+          },
+          "position": {
+            "type": "string",
+            "description": "Vertical position on screen",
+            "enum": ["top", "center", "bottom"],
+            "default": "center"
+          }
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "description": "Global caption settings",
+      "properties": {
+        "fontFamily": {
+          "type": "string",
+          "default": "Inter"
+        },
+        "fontSize": {
+          "type": "number",
+          "default": 48
+        },
+        "fontWeight": {
+          "type": "number",
+          "default": 700
+        },
+        "color": {
+          "type": "string",
+          "default": "#FFFFFF"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "default": "transparent"
+        },
+        "emphasisScale": {
+          "type": "number",
+          "description": "Scale factor for emphasized words",
+          "default": 1.2
+        }
+      }
+    }
+  }
+}

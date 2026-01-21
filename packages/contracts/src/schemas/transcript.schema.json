@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://steno.local/schemas/transcript.schema.json",
+  "title": "Transcript",
+  "description": "Word-level transcript with timestamps from speech-to-text",
+  "type": "object",
+  "required": ["words", "duration", "language"],
+  "properties": {
+    "words": {
+      "type": "array",
+      "description": "Array of words with timing information",
+      "items": {
+        "type": "object",
+        "required": ["text", "start", "end"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The transcribed word"
+          },
+          "start": {
+            "type": "number",
+            "description": "Start time in seconds",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "description": "End time in seconds",
+            "minimum": 0
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Confidence score (0-1)",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "text": {
+      "type": "string",
+      "description": "Full transcript text"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Total duration in seconds",
+      "minimum": 0
+    },
+    "language": {
+      "type": "string",
+      "description": "Detected or specified language code",
+      "default": "en"
+    }
+  }
+}
