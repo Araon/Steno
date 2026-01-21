@@ -1,0 +1,11 @@
+{
+  "name": "@steno/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pipenv run dev",
+    "start": "pipenv run start",
+    "install:py": "pipenv install",
+    "install:py:dev": "pipenv install --dev"
+  }
+}

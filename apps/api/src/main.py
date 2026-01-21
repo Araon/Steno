@@ -1,0 +1,301 @@
+"""FastAPI application for Steno API."""
+
+import logging
+import os
+import tempfile
+import time
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Optional
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+
+from .audio import AudioProcessor
+from .captions import CaptionSegmenter, CaptionStylizer
+from .models import (
+    CaptionAnimation,
+    Captions,
+    GenerateCaptionsRequest,
+    GenerateCaptionsResponse,
+    HealthResponse,
+    ProcessResponse,
+    Transcript,
+    TranscribeResponse,
+)
+from .transcription import WhisperService
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# Global services (initialized on startup)
+audio_processor: Optional[AudioProcessor] = None
+whisper_service: Optional[WhisperService] = None
+caption_segmenter: Optional[CaptionSegmenter] = None
+caption_stylizer: Optional[CaptionStylizer] = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan - initialize services on startup."""
+    global audio_processor, whisper_service, caption_segmenter, caption_stylizer
+
+    logger.info("Initializing Steno API services...")
+
+    # Initialize services
+    audio_processor = AudioProcessor()
+    whisper_service = WhisperService(
+        model_name=os.getenv("WHISPER_MODEL", "base")
+    )
+    caption_segmenter = CaptionSegmenter()
+    caption_stylizer = CaptionStylizer()
+
+    logger.info("Steno API services initialized")
+
+    yield
+
+    logger.info("Shutting down Steno API services...")
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="Steno API",
+    description="Speech-to-text and caption intelligence for video captioning",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# Configure CORS for local development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================
+# Health Check
+# ============================================
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Health check endpoint."""
+    return HealthResponse(status="ok", version="0.1.0")
+
+
+# ============================================
+# Transcription Endpoint
+# ============================================
+
+
+@app.post("/api/transcribe", response_model=TranscribeResponse)
+async def transcribe_video(
+    file: UploadFile = File(..., description="Video file to transcribe"),
+    language: Optional[str] = Form(None, description="Language hint (e.g., 'en')"),
+):
+    """Transcribe a video file and return word-level timestamps.
+
+    Accepts video file upload, extracts audio, and runs Whisper transcription.
+    """
+    if not audio_processor or not whisper_service:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+
+    start_time = time.time()
+
+    # Validate file type
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided")
+
+    allowed_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
+    ext = Path(file.filename).suffix.lower()
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {allowed_extensions}",
+        )
+
+    # Save uploaded file to temp location
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_video:
+        content = await file.read()
+        tmp_video.write(content)
+        tmp_video_path = tmp_video.name
+
+    audio_path = None
+    try:
+        # Extract audio
+        logger.info(f"Processing uploaded file: {file.filename}")
+        audio_path = audio_processor.extract_audio(tmp_video_path)
+
+        # Transcribe
+        transcript = whisper_service.transcribe(audio_path, language=language)
+
+        processing_time = (time.time() - start_time) * 1000
+
+        return TranscribeResponse(
+            transcript=transcript,
+            processingTime=processing_time,
+        )
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Cleanup temp files
+        if os.path.exists(tmp_video_path):
+            os.unlink(tmp_video_path)
+        if audio_path and os.path.exists(audio_path):
+            os.unlink(audio_path)
+
+
+# ============================================
+# Caption Generation Endpoint
+# ============================================
+
+
+@app.post("/api/captions", response_model=GenerateCaptionsResponse)
+async def generate_captions(request: GenerateCaptionsRequest):
+    """Generate styled captions from a transcript.
+
+    Takes a transcript with word-level timestamps and produces
+    segmented, styled captions ready for rendering.
+    """
+    if not caption_segmenter or not caption_stylizer:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+
+    start_time = time.time()
+
+    try:
+        # Update segmenter settings
+        caption_segmenter.max_words = request.max_words_per_caption
+
+        # Segment transcript into caption phrases
+        captions_list = caption_segmenter.segment(
+            transcript=request.transcript,
+            default_animation=request.default_animation,
+        )
+
+        # Apply styling
+        captions = caption_stylizer.stylize(captions_list)
+
+        processing_time = (time.time() - start_time) * 1000
+
+        return GenerateCaptionsResponse(
+            captions=captions,
+            processingTime=processing_time,
+        )
+
+    except Exception as e:
+        logger.error(f"Caption generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Combined Process Endpoint
+# ============================================
+
+
+@app.post("/api/process", response_model=ProcessResponse)
+async def process_video(
+    file: UploadFile = File(..., description="Video file to process"),
+    language: Optional[str] = Form(None, description="Language hint"),
+    max_words_per_caption: int = Form(4, description="Max words per caption"),
+    default_animation: str = Form("scale-in", description="Default animation"),
+):
+    """End-to-end processing: video → transcript → captions.
+
+    Combines transcription and caption generation in a single request.
+    """
+    if not audio_processor or not whisper_service:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+    if not caption_segmenter or not caption_stylizer:
+        raise HTTPException(status_code=503, detail="Services not initialized")
+
+    start_time = time.time()
+
+    # Validate file type
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided")
+
+    allowed_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
+    ext = Path(file.filename).suffix.lower()
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {allowed_extensions}",
+        )
+
+    # Parse animation enum
+    try:
+        animation = CaptionAnimation(default_animation)
+    except ValueError:
+        animation = CaptionAnimation.SCALE_IN
+
+    # Save uploaded file to temp location
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_video:
+        content = await file.read()
+        tmp_video.write(content)
+        tmp_video_path = tmp_video.name
+
+    audio_path = None
+    try:
+        # Extract audio
+        logger.info(f"Processing uploaded file: {file.filename}")
+        audio_path = audio_processor.extract_audio(tmp_video_path)
+
+        # Transcribe
+        transcript = whisper_service.transcribe(audio_path, language=language)
+
+        # Update segmenter settings
+        caption_segmenter.max_words = max_words_per_caption
+
+        # Segment into captions
+        captions_list = caption_segmenter.segment(
+            transcript=transcript,
+            default_animation=animation,
+        )
+
+        # Apply styling
+        captions = caption_stylizer.stylize(captions_list)
+
+        processing_time = (time.time() - start_time) * 1000
+
+        return ProcessResponse(
+            transcript=transcript,
+            captions=captions,
+            processingTime=processing_time,
+        )
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Cleanup temp files
+        if os.path.exists(tmp_video_path):
+            os.unlink(tmp_video_path)
+        if audio_path and os.path.exists(audio_path):
+            os.unlink(audio_path)
+
+
+# ============================================
+# Development Server
+# ============================================
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "src.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
