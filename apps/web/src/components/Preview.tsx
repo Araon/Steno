@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Player } from "@remotion/player";
 import { Monitor, Smartphone, Square } from "lucide-react";
 import { useStenoStore } from "../store/useStenoStore";
 import { PreviewComposition, type PreviewCompositionProps } from "./PreviewComposition";
+import { isPositionCoords, presetToCoords, type CaptionPosition } from "@steno/contracts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TypedPlayer = Player as React.ComponentType<{
@@ -25,19 +26,93 @@ const ASPECT_RATIOS = {
 } as const;
 
 export const Preview: React.FC = () => {
-  const { captions, videoUrl, aspectRatio, setAspectRatio } = useStenoStore();
+  const {
+    captions,
+    videoUrl,
+    videoDuration,
+    aspectRatio,
+    setAspectRatio,
+    selectedCaptionId,
+    setSelectedCaptionId,
+    updateCaption,
+  } = useStenoStore();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { width, height } = ASPECT_RATIOS[aspectRatio];
 
-  // Calculate duration from captions
+  // Calculate duration from captions or video
   const durationInSeconds = useMemo(() => {
+    if (videoDuration > 0) return videoDuration;
     if (!captions || captions.captions.length === 0) return 5;
     const lastCaption = captions.captions[captions.captions.length - 1];
     return Math.ceil(lastCaption.end) + 1;
-  }, [captions]);
+  }, [captions, videoDuration]);
 
   const fps = 30;
-  const durationInFrames = durationInSeconds * fps;
+  const durationInFrames = Math.ceil(durationInSeconds * fps);
+
+  // Ensure we always have an active caption selected for positioning
+  useEffect(() => {
+    if (!captions || captions.captions.length === 0) return;
+    if (!selectedCaptionId) {
+      setSelectedCaptionId(captions.captions[0].id);
+    }
+  }, [captions, selectedCaptionId, setSelectedCaptionId]);
+
+  const activeCaption = useMemo(() => {
+    if (!captions || captions.captions.length === 0) return null;
+    return (
+      captions.captions.find((c) => c.id === selectedCaptionId) ||
+      captions.captions[0]
+    );
+  }, [captions, selectedCaptionId]);
+
+  const getCoords = useCallback((captionPosition: CaptionPosition) => {
+    if (isPositionCoords(captionPosition)) return captionPosition;
+    return presetToCoords(captionPosition);
+  }, []);
+
+  const activeCoords = useMemo(
+    () => (activeCaption ? getCoords(activeCaption.position) : null),
+    [activeCaption, getCoords]
+  );
+
+  const updatePositionFromEvent = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!containerRef.current || !activeCaption) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      const y = ((clientY - rect.top) / rect.height) * 100;
+
+      const clampedX = Math.min(100, Math.max(0, x));
+      const clampedY = Math.min(100, Math.max(0, y));
+
+      updateCaption(activeCaption.id, { position: { x: clampedX, y: clampedY } });
+    },
+    [activeCaption, updateCaption]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isDragging) return;
+      updatePositionFromEvent(e.clientX, e.clientY);
+    },
+    [isDragging, updatePositionFromEvent]
+  );
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const stopDragging = () => setIsDragging(false);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopDragging);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopDragging);
+    };
+  }, [handlePointerMove, isDragging]);
 
   // Empty state
   if (!captions || captions.captions.length === 0) {
@@ -88,6 +163,7 @@ export const Preview: React.FC = () => {
 
       {/* Player */}
       <div
+        ref={containerRef}
         className="relative rounded-xl overflow-hidden bg-black mx-auto"
         style={{
           maxWidth: "100%",
@@ -110,7 +186,42 @@ export const Preview: React.FC = () => {
           loop
           autoPlay={false}
         />
+
+        {activeCaption && activeCoords && (
+          <div className="pointer-events-none absolute inset-0">
+            <div
+              className="absolute"
+              style={{
+                left: `${activeCoords.x}%`,
+                top: `${activeCoords.y}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <button
+                className="pointer-events-auto bg-primary-500 text-white text-xs px-3 py-1 rounded-full shadow-lg shadow-primary-500/30 hover:bg-primary-400 transition-colors"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedCaptionId(activeCaption.id);
+                  setIsDragging(true);
+                  updatePositionFromEvent(e.clientX, e.clientY);
+                }}
+              >
+                Drag caption
+              </button>
+              <div className="pointer-events-none mt-1 text-[11px] text-slate-100 text-center bg-black/70 px-3 py-1 rounded">
+                {activeCaption.text}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {activeCaption && (
+        <p className="text-xs text-slate-400 text-center">
+          Drag the handle on the preview to position the selected caption.
+        </p>
+      )}
     </div>
   );
 };

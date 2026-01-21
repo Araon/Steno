@@ -8,8 +8,8 @@ import {
   spring,
   Video,
 } from "remotion";
-import type { Captions, Caption, CaptionSettings } from "@steno/contracts";
-import { DEFAULT_CAPTION_SETTINGS } from "@steno/contracts";
+import type { Captions, Caption, CaptionSettings, CaptionPosition, CaptionPositionCoords } from "@steno/contracts";
+import { DEFAULT_CAPTION_SETTINGS, isPositionCoords, presetToCoords } from "@steno/contracts";
 
 export interface PreviewCompositionProps {
   captions: Captions;
@@ -86,6 +86,16 @@ const CaptionSequence: React.FC<{
   );
 };
 
+/**
+ * Convert position to coordinates (handles both presets and coordinates)
+ */
+function getPositionCoords(position: CaptionPosition): CaptionPositionCoords {
+  if (isPositionCoords(position)) {
+    return position;
+  }
+  return presetToCoords(position);
+}
+
 const AnimatedCaption: React.FC<{
   caption: Caption;
   settings: CaptionSettings;
@@ -124,16 +134,7 @@ const AnimatedCaption: React.FC<{
       break;
   }
 
-  const getPositionClasses = () => {
-    switch (caption.position) {
-      case "top":
-        return "items-start pt-20";
-      case "bottom":
-        return "items-end pb-20";
-      default:
-        return "items-center";
-    }
-  };
+  const coords = getPositionCoords(caption.position);
 
   const isEmphasized = (word: string) => {
     const cleanWord = word.toLowerCase().replace(/[.,!?]/g, "");
@@ -144,10 +145,14 @@ const AnimatedCaption: React.FC<{
 
   return (
     <div
-      className={`flex flex-col justify-center ${getPositionClasses()} w-full h-full px-8`}
+      className="absolute"
       style={{
-        transform: `scale(${scale}) translateY(${translateY}px)`,
+        position: "absolute",
+        left: `${coords.x}%`,
+        top: `${coords.y}%`,
+        transform: `translate(-50%, -50%) scale(${scale}) translateY(${translateY}px)`,
         opacity,
+        maxWidth: "90%",
       }}
     >
       <div
@@ -188,17 +193,7 @@ const WordByWordCaption: React.FC<{
 }> = ({ caption, settings }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-
-  const getPositionClasses = () => {
-    switch (caption.position) {
-      case "top":
-        return "items-start pt-20";
-      case "bottom":
-        return "items-end pb-20";
-      default:
-        return "items-center";
-    }
-  };
+  const coords = getPositionCoords(caption.position);
 
   const isEmphasized = (word: string) => {
     const cleanWord = word.toLowerCase().replace(/[.,!?]/g, "");
@@ -209,7 +204,14 @@ const WordByWordCaption: React.FC<{
 
   return (
     <div
-      className={`flex flex-col justify-center ${getPositionClasses()} w-full h-full px-8`}
+      className="absolute"
+      style={{
+        position: "absolute",
+        left: `${coords.x}%`,
+        top: `${coords.y}%`,
+        transform: "translate(-50%, -50%)",
+        maxWidth: "90%",
+      }}
     >
       <div
         className="text-center"

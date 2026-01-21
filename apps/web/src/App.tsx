@@ -17,6 +17,8 @@ function App() {
     processingStep,
     setTranscript,
     setCaptions,
+    setVideoId,
+    setVideoDuration,
     setProcessingStep,
     setProcessingProgress,
     setErrorMessage,
@@ -54,6 +56,8 @@ function App() {
 
       setTranscript(result.transcript);
       setCaptions(result.captions);
+      setVideoId(result.videoId);
+      setVideoDuration(result.videoDuration);
       setProcessingStep("ready");
       setProcessingProgress(100);
     } catch (error) {
@@ -67,6 +71,8 @@ function App() {
     videoFile,
     setTranscript,
     setCaptions,
+    setVideoId,
+    setVideoDuration,
     setProcessingStep,
     setProcessingProgress,
     setErrorMessage,
@@ -165,17 +171,8 @@ function App() {
           </div>
         ) : (
           /* Editor Stage */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left column - Editor */}
-            <div className="space-y-6">
-              <CaptionEditor />
-              <Export />
-            </div>
-
-            {/* Right column - Preview */}
-            <div className="lg:sticky lg:top-24 lg:self-start">
-              <Preview />
-            </div>
+          <div className="max-w-7xl mx-auto">
+            <CaptionEditor />
           </div>
         )}
       </main>
