@@ -48,7 +48,7 @@ jobs:
 
       - name: Install Python dependencies
         working-directory: apps/api
-        run: pipenv install --dev
+        run: pipenv install --dev --skip-lock
 
       - name: Run ruff check
         working-directory: apps/api
@@ -92,7 +92,7 @@ jobs:
 
       - name: Install Python dependencies
         working-directory: apps/api
-        run: pipenv install --dev
+        run: pipenv install --dev --skip-lock
 
       - name: Run TypeScript lint fix
         run: pnpm lint || true
