@@ -1,6 +1,7 @@
 """Caption stylization - add emphasis, animations, and visual styles."""
 
 import logging
+from typing import Optional
 
 import spacy
 from spacy.language import Language
@@ -44,14 +45,14 @@ class CaptionStylizer:
     # Single animation style - word by word reveal
     DEFAULT_ANIMATION = CaptionAnimation.WORD_BY_WORD
 
-    def __init__(self, model_name: str | None = None):
+    def __init__(self, model_name: Optional[str] = None):
         """Initialize the caption stylizer.
 
         Args:
             model_name: spaCy model to use for NLP analysis.
         """
         self.model_name = model_name or self.DEFAULT_MODEL
-        self._nlp: Language | None = None
+        self._nlp: Optional[Language] = None
 
     @property
     def nlp(self) -> Language:
@@ -271,8 +272,6 @@ class CaptionStylizer:
         Returns:
             Selected style.
         """
-        caption.text.lower()
-
         # Questions get italic style
         if caption.text.strip().endswith("?"):
             return CaptionStyle.ITALIC

@@ -1,5 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
-import { useCurrentFrame } from "remotion";
+import React, { useRef } from "react";
 import type {
   Caption as CaptionType,
   CaptionSettings,
@@ -36,72 +35,6 @@ export const Caption: React.FC<CaptionProps> = ({ caption, settings }) => {
   const mergedSettings = { ...DEFAULT_CAPTION_SETTINGS, ...settings };
   const coords = getPositionCoords(caption.position);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const frame = useCurrentFrame();
-
-  // #region agent log
-  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sessionId: "debug-session",
-      runId: "run2",
-      hypothesisId: "H1",
-      location: "Caption.tsx:coords",
-      message: "Resolved caption coordinates",
-      data: {
-        id: caption.id,
-        rawPosition: caption.position,
-        resolvedCoords: coords,
-        style: caption.style,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-
-  // #region agent log
-  useLayoutEffect(() => {
-    const rect = wrapperRef.current?.getBoundingClientRect();
-    const parentRect = wrapperRef.current?.parentElement?.getBoundingClientRect();
-    const parentStyles = wrapperRef.current?.parentElement
-      ? getComputedStyle(wrapperRef.current.parentElement)
-      : null;
-    fetch(
-      "http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: "debug-session",
-          runId: "run2",
-          hypothesisId: "H6",
-          location: "Caption.tsx:layout",
-          message: "Caption wrapper rect",
-          data: {
-            id: caption.id,
-            resolvedCoords: coords,
-            rect,
-            parentRect,
-            parentStyles: parentStyles
-              ? {
-                  position: parentStyles.position,
-                  transform: parentStyles.transform,
-                  width: parentStyles.width,
-                  height: parentStyles.height,
-                }
-              : null,
-            viewport: {
-              innerWidth: window.innerWidth,
-              innerHeight: window.innerHeight,
-            },
-            frame,
-          },
-          timestamp: Date.now(),
-        }),
-      }
-    ).catch(() => {});
-  }, [caption.id, coords, frame]);
-  // #endregion
 
   // Get style classes based on caption style
   const getStyleClasses = () => {

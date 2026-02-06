@@ -38,7 +38,7 @@ export interface Transcript {
 export type CaptionStyle = 'normal' | 'bold' | 'italic' | 'highlight';
 
 /** Animation type for captions */
-export type CaptionAnimation = 'none' | 'fade-in' | 'scale-in' | 'word-by-word' | 'typewriter';
+export type CaptionAnimation = 'word-by-word';
 
 /** Legacy vertical position presets */
 export type CaptionPositionPreset = 'top' | 'center' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -153,7 +153,7 @@ export const DEFAULT_CAPTION_SETTINGS: CaptionSettings = {
 export const DEFAULT_CAPTION: Omit<Caption, 'id' | 'text' | 'start' | 'end' | 'words'> = {
   emphasis: [],
   style: 'normal',
-  animation: 'scale-in',
+  animation: 'word-by-word',
   position: { x: 50, y: 50 },  // Center by default
   lineCount: 1,
 };
@@ -217,7 +217,7 @@ export interface VideoMetadata {
 /**
  * Aspect ratio presets
  */
-export type AspectRatio = '16:9' | '9:16' | '1:1' | '4:5';
+export type AspectRatio = '16:9' | '9:16';
 
 /**
  * Render configuration

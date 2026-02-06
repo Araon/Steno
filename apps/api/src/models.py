@@ -4,6 +4,7 @@ These models mirror the TypeScript contracts in @steno/contracts.
 """
 
 from enum import Enum
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -52,7 +53,7 @@ class TranscriptWord(BaseModel):
     text: str = Field(..., description="The transcribed word")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
-    confidence: float | None = Field(
+    confidence: Optional[float] = Field(
         None, ge=0, le=1, description="Confidence score (0-1)"
     )
 
@@ -63,7 +64,7 @@ class Transcript(BaseModel):
     words: list[TranscriptWord] = Field(
         ..., description="Array of words with timing information"
     )
-    text: str | None = Field(None, description="Full transcript text")
+    text: Optional[str] = Field(None, description="Full transcript text")
     duration: float = Field(..., ge=0, description="Total duration in seconds")
     language: str = Field(default="en", description="Detected or specified language")
 
@@ -74,10 +75,10 @@ class CaptionWord(BaseModel):
     text: str = Field(..., description="The word text")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
-    fontSizeMultiplier: float | None = Field(
+    fontSizeMultiplier: Optional[float] = Field(
         default=None, description="Font size multiplier for this word"
     )
-    lineBreakBefore: bool | None = Field(
+    lineBreakBefore: Optional[bool] = Field(
         default=None, description="Whether this word starts a new line"
     )
 
@@ -95,14 +96,14 @@ class Caption(BaseModel):
     animation: CaptionAnimation = Field(
         default=CaptionAnimation.SCALE_IN, description="Animation type"
     )
-    position: CaptionPositionPreset | CaptionPositionCoords = Field(
+    position: Union[CaptionPositionPreset, CaptionPositionCoords] = Field(
         default_factory=lambda: CaptionPositionCoords(x=50, y=50),
         description="Position - preset or freeform coordinates",
     )
-    maxCharsPerLine: int | None = Field(
+    maxCharsPerLine: Optional[int] = Field(
         default=None, description="Maximum characters per line for wrapping"
     )
-    lineCount: int | None = Field(
+    lineCount: Optional[int] = Field(
         default=None, description="Number of lines this caption spans"
     )
 
@@ -129,7 +130,7 @@ class Captions(BaseModel):
 
     version: str = Field(default="1.0", description="Schema version")
     captions: list[Caption] = Field(..., description="Array of caption segments")
-    settings: CaptionSettings | None = Field(
+    settings: Optional[CaptionSettings] = Field(
         default=None, description="Global settings"
     )
 
@@ -225,8 +226,8 @@ class RenderProgress(BaseModel):
     job_id: str = Field(..., alias="jobId", description="Render job ID")
     status: str = Field(..., description="Current status")
     progress: int = Field(default=0, ge=0, le=100, description="Progress percentage")
-    error: str | None = Field(default=None, description="Error message if failed")
-    output_url: str | None = Field(
+    error: Optional[str] = Field(default=None, description="Error message if failed")
+    output_url: Optional[str] = Field(
         default=None, alias="outputUrl", description="Output video URL when complete"
     )
 

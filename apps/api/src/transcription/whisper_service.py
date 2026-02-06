@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional, Union
 
 import whisper
 
@@ -17,7 +18,7 @@ class WhisperService:
     # Changed default from "base" to "small" for better accuracy
     DEFAULT_MODEL = "small"
 
-    def __init__(self, model_name: str | None = None):
+    def __init__(self, model_name: Optional[str] = None):
         """Initialize the Whisper service.
 
         Args:
@@ -28,7 +29,7 @@ class WhisperService:
                 - medium/large: More accurate but slower
         """  # noqa: E501
         self.model_name = model_name or self.DEFAULT_MODEL
-        self._model: whisper.Whisper | None = None
+        self._model: whisper.Optional[Whisper] = None
         logger.info(f"WhisperService initialized with model: {self.model_name}")
 
     @property
@@ -42,8 +43,8 @@ class WhisperService:
 
     def transcribe(
         self,
-        audio_path: str | Path,
-        language: str | None = None,
+        audio_path: Union[str, Path],
+        language: Optional[str] = None,
     ) -> Transcript:
         """Transcribe audio file with word-level timestamps.
 

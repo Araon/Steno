@@ -38,7 +38,7 @@ function App() {
         videoFile,
         {
           maxWordsPerCaption: 4,
-          defaultAnimation: "scale-in",
+          defaultAnimation: "word-by-word",
         },
         (progress) => {
           if (progress < 20) {

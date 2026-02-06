@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "main",
+  "pull-request-title-pattern": "chore(release): bumped version to ${version}",
+  "plugins": [
+    {
+      "type": "node-workspace"
+    }
+  ],
+  "packages": {
+    ".": {
+      "component": "steno"
+    }
+  }
+}

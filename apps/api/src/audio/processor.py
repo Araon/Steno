@@ -4,6 +4,7 @@ import logging
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class AudioProcessor:
     CHANNELS = 1  # Mono
     FORMAT = "wav"
 
-    def __init__(self, temp_dir: str | None = None):
+    def __init__(self, temp_dir: Optional[str] = None):
         """Initialize the audio processor.
 
         Args:
@@ -56,8 +57,8 @@ class AudioProcessor:
 
     def extract_audio(
         self,
-        video_path: str | Path,
-        output_path: str | Path | None = None,
+        video_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
     ) -> Path:
 
         video_path = Path(video_path)
@@ -112,7 +113,7 @@ class AudioProcessor:
             logger.error(f"FFmpeg error: {e.stderr}")
             raise RuntimeError(f"Audio extraction failed: {e.stderr}") from e
 
-    def get_audio_duration(self, audio_path: str | Path) -> float:
+    def get_audio_duration(self, audio_path: Union[str, Path]) -> float:
         """Get the duration of an audio file in seconds.
 
         Args:
@@ -154,7 +155,7 @@ class AudioProcessor:
             logger.error(f"Error getting audio duration: {e}")
             raise RuntimeError(f"Failed to get audio duration: {e}") from e
 
-    def get_duration(self, video_path: str | Path) -> float:
+    def get_duration(self, video_path: Union[str, Path]) -> float:
         """Get the duration of a video file in seconds.
 
         Args:
@@ -166,7 +167,7 @@ class AudioProcessor:
         metadata = self.get_video_metadata(video_path)
         return metadata.get("duration", 0.0)
 
-    def get_video_metadata(self, video_path: str | Path) -> dict:
+    def get_video_metadata(self, video_path: Union[str, Path]) -> dict:
         """Get metadata from a video file.
 
         Args:
@@ -245,7 +246,7 @@ class AudioProcessor:
                 "fps": 30.0,
             }
 
-    def cleanup(self, file_path: str | Path) -> None:
+    def cleanup(self, file_path: Union[str, Path]) -> None:
         """Remove a temporary file.
 
         Args:

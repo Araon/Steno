@@ -56,10 +56,6 @@ function getCompositionId(aspectRatio: string): string {
       return "StenoPortrait";
     case "16:9":
       return "StenoLandscape";
-    case "1:1":
-      return "StenoSquare";
-    case "4:5":
-      return "StenoPortrait"; // Use portrait for 4:5 as well
     default:
       return "StenoPortrait";
   }
@@ -78,22 +74,6 @@ export interface RenderOptions {
 export async function renderVideo(options: RenderOptions): Promise<string> {
   const { job, videoPath, outputPath, onProgress } = options;
 
-  // #region agent log
-  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sessionId: "debug-session",
-      runId: "run2",
-      hypothesisId: "H5",
-      location: "render.ts:rebundle-flag",
-      message: "Rebundle flag state",
-      data: { REBUNDLE_ON_EACH_RENDER },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-
   // Force re-bundle to ensure latest renderer code is used
   if (REBUNDLE_ON_EACH_RENDER) {
     bundledSiteUrl = null;
@@ -101,22 +81,6 @@ export async function renderVideo(options: RenderOptions): Promise<string> {
 
   // Get the bundled site
   const serveUrl = await getBundledSite();
-
-  // #region agent log
-  fetch("http://127.0.0.1:7243/ingest/70d951d1-f59d-4979-ab77-07fedbe75bc1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sessionId: "debug-session",
-      runId: "run2",
-      hypothesisId: "H5",
-      location: "render.ts:bundle-path",
-      message: "Using bundled site",
-      data: { serveUrl },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 
   // Get dimensions for aspect ratio
   const dimensions = ASPECT_RATIO_DIMENSIONS[job.aspectRatio] || {

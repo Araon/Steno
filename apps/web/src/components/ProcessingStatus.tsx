@@ -8,7 +8,7 @@ const STEP_INFO: Record<ProcessingStep, { label: string; icon: React.ElementType
   transcribing: { label: "Transcribing audio...", icon: Mic },
   generating: { label: "Generating captions...", icon: Sparkles },
   ready: { label: "Ready to edit", icon: CheckCircle },
-  exporting: { label: "Exporting...", icon: Upload },
+  rendering: { label: "Rendering...", icon: Upload },
   error: { label: "Error", icon: AlertCircle },
 };
 
@@ -21,7 +21,7 @@ export const ProcessingStatus: React.FC = () => {
 
   const { label, icon: Icon } = STEP_INFO[processingStep];
   const isError = processingStep === "error";
-  const isProcessing = ["uploading", "transcribing", "generating", "exporting"].includes(
+  const isProcessing = ["uploading", "transcribing", "generating", "rendering"].includes(
     processingStep
   );
 
