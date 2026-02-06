@@ -2,7 +2,6 @@
 
 import logging
 import uuid
-from typing import Optional
 
 import spacy
 from spacy.language import Language
@@ -37,7 +36,7 @@ class CaptionSegmenter:
 
     def __init__(
         self,
-        model_name: Optional[str] = None,
+        model_name: str | None = None,
         max_words_per_caption: int = DEFAULT_MAX_WORDS,
         min_words_per_caption: int = DEFAULT_MIN_WORDS,
         max_chars_per_line: int = DEFAULT_MAX_CHARS_PER_LINE,
@@ -54,7 +53,9 @@ class CaptionSegmenter:
         self.max_words = max_words_per_caption
         self.min_words = min_words_per_caption
         self.max_chars_per_line = max_chars_per_line
-        self._nlp: Optional[Language] = None
+        self._nlp: Language | None = None
+        self.max_words_per_caption = max_words_per_caption
+        self.min_words_per_caption = min_words_per_caption
 
     @property
     def nlp(self) -> Language:

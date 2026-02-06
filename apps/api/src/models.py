@@ -3,13 +3,12 @@
 These models mirror the TypeScript contracts in @steno/contracts.
 """
 
-from enum import Enum
-from typing import Optional, Union
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class CaptionStyle(str, Enum):
+class CaptionStyle(StrEnum):
     """Visual style for captions."""
 
     NORMAL = "normal"
@@ -18,7 +17,7 @@ class CaptionStyle(str, Enum):
     HIGHLIGHT = "highlight"
 
 
-class CaptionAnimation(str, Enum):
+class CaptionAnimation(StrEnum):
     """Animation type for captions."""
 
     NONE = "none"
@@ -28,7 +27,7 @@ class CaptionAnimation(str, Enum):
     TYPEWRITER = "typewriter"
 
 
-class CaptionPositionPreset(str, Enum):
+class CaptionPositionPreset(StrEnum):
     """Position presets on screen."""
 
     TOP = "top"
@@ -53,7 +52,7 @@ class TranscriptWord(BaseModel):
     text: str = Field(..., description="The transcribed word")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
-    confidence: Optional[float] = Field(
+    confidence: float | None = Field(
         None, ge=0, le=1, description="Confidence score (0-1)"
     )
 
@@ -64,7 +63,7 @@ class Transcript(BaseModel):
     words: list[TranscriptWord] = Field(
         ..., description="Array of words with timing information"
     )
-    text: Optional[str] = Field(None, description="Full transcript text")
+    text: str | None = Field(None, description="Full transcript text")
     duration: float = Field(..., ge=0, description="Total duration in seconds")
     language: str = Field(default="en", description="Detected or specified language")
 
@@ -75,10 +74,10 @@ class CaptionWord(BaseModel):
     text: str = Field(..., description="The word text")
     start: float = Field(..., ge=0, description="Start time in seconds")
     end: float = Field(..., ge=0, description="End time in seconds")
-    fontSizeMultiplier: Optional[float] = Field(
+    fontSizeMultiplier: float | None = Field(
         default=None, description="Font size multiplier for this word"
     )
-    lineBreakBefore: Optional[bool] = Field(
+    lineBreakBefore: bool | None = Field(
         default=None, description="Whether this word starts a new line"
     )
 
@@ -96,14 +95,14 @@ class Caption(BaseModel):
     animation: CaptionAnimation = Field(
         default=CaptionAnimation.SCALE_IN, description="Animation type"
     )
-    position: Union[CaptionPositionPreset, CaptionPositionCoords] = Field(
+    position: CaptionPositionPreset | CaptionPositionCoords = Field(
         default_factory=lambda: CaptionPositionCoords(x=50, y=50),
         description="Position - preset or freeform coordinates",
     )
-    maxCharsPerLine: Optional[int] = Field(
+    maxCharsPerLine: int | None = Field(
         default=None, description="Maximum characters per line for wrapping"
     )
-    lineCount: Optional[int] = Field(
+    lineCount: int | None = Field(
         default=None, description="Number of lines this caption spans"
     )
 
@@ -130,7 +129,7 @@ class Captions(BaseModel):
 
     version: str = Field(default="1.0", description="Schema version")
     captions: list[Caption] = Field(..., description="Array of caption segments")
-    settings: Optional[CaptionSettings] = Field(
+    settings: CaptionSettings | None = Field(
         default=None, description="Global settings"
     )
 
@@ -226,8 +225,8 @@ class RenderProgress(BaseModel):
     job_id: str = Field(..., alias="jobId", description="Render job ID")
     status: str = Field(..., description="Current status")
     progress: int = Field(default=0, ge=0, le=100, description="Progress percentage")
-    error: Optional[str] = Field(default=None, description="Error message if failed")
-    output_url: Optional[str] = Field(
+    error: str | None = Field(default=None, description="Error message if failed")
+    output_url: str | None = Field(
         default=None, alias="outputUrl", description="Output video URL when complete"
     )
 

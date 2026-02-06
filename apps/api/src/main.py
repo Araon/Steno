@@ -5,7 +5,6 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,10 +34,10 @@ STORAGE_DIR = Path(os.getenv("STENO_STORAGE_DIR", "./storage"))
 VIDEO_STORAGE_DIR = STORAGE_DIR / "videos"
 RENDER_OUTPUT_DIR = STORAGE_DIR / "renders"
 
-audio_processor: Optional[AudioProcessor] = None
-whisper_service: Optional[WhisperService] = None
-caption_segmenter: Optional[CaptionSegmenter] = None
-caption_stylizer: Optional[CaptionStylizer] = None
+audio_processor: AudioProcessor | None = None
+whisper_service: WhisperService | None = None
+caption_segmenter: CaptionSegmenter | None = None
+caption_stylizer: CaptionStylizer | None = None
 
 
 @asynccontextmanager
@@ -95,7 +94,7 @@ async def health_check():
 @app.post("/api/transcribe", response_model=TranscribeResponse)
 async def transcribe_video(
     file: UploadFile = File(..., description="Video file to transcribe"),
-    language: Optional[str] = Form(None, description="Language hint (e.g., 'en')"),
+    language: str | None = Form(None, description="Language hint (e.g., 'en')"),
 ):
     """Transcribe a video file and return word-level timestamps.
 
@@ -198,7 +197,7 @@ async def generate_captions(request: GenerateCaptionsRequest):
 @app.post("/api/process", response_model=ProcessResponse)
 async def process_video(
     file: UploadFile = File(..., description="Video file to process"),
-    language: Optional[str] = Form(None, description="Language hint"),
+    language: str | None = Form(None, description="Language hint"),
     max_words_per_caption: int = Form(4, description="Max words per caption"),
     default_animation: str = Form("scale-in", description="Default animation"),
 ):
@@ -335,7 +334,7 @@ async def delete_video(video_id: str):
     return {"status": "deleted", "videoId": video_id}
 
 
-def get_video_path(video_id: str) -> Optional[Path]:
+def get_video_path(video_id: str) -> Path | None:
     """Get the path to a stored video by ID.
 
     Args:
