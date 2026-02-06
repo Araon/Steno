@@ -54,7 +54,7 @@ jobs:
 
       - name: Install Python dependencies
         working-directory: apps/api
-        run: pipenv install --dev
+        run: pipenv install --dev --skip-lock --python $(which python)
 
       - name: Run Python mock tests
         working-directory: apps/api
