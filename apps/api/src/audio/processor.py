@@ -1,4 +1,4 @@
-"""Audio extraction and processing using FFmpeg/pydub."""
+from __future__ import annotations
 
 import logging
 import subprocess
@@ -44,7 +44,8 @@ class AudioProcessor:
             self._ffmpeg_verified = True
         except FileNotFoundError as e:
             raise RuntimeError(
-                "FFmpeg not found. Please install FFmpeg and ensure it's in PATH.\n"
+                "FFmpeg not found. Please install FFmpeg and ensure it's "
+                "in PATH.\n"
                 "Installation instructions:\n"
                 "  Ubuntu/Debian: sudo apt-get install ffmpeg\n"
                 "  macOS: brew install ffmpeg\n"

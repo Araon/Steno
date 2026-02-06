@@ -18,7 +18,7 @@ const defaultCaptions: Captions = {
       ],
       emphasis: ["world"],
       style: "bold",
-      animation: "scale-in",
+      animation: "word-by-word",
       position: { x: 50, y: 50 },
       lineCount: 1,
     },
@@ -34,7 +34,7 @@ const defaultCaptions: Captions = {
       ],
       emphasis: ["Steno"],
       style: "normal",
-      animation: "fade-in",
+      animation: "word-by-word",
       position: { x: 50, y: 50 },
       lineCount: 1,
     },
@@ -91,21 +91,6 @@ export const RemotionRoot: React.FC = () => {
         durationInFrames={150}
         fps={30}
         width={1920}
-        height={1080}
-        defaultProps={{
-          captions: defaultCaptions,
-          videoSrc: undefined,
-          backgroundColor: "#000000",
-        }}
-      />
-
-      {/* 1:1 Square (Instagram Post) */}
-      <Composition
-        id="StenoSquare"
-        component={StenoComposition}
-        durationInFrames={150}
-        fps={30}
-        width={1080}
         height={1080}
         defaultProps={{
           captions: defaultCaptions,

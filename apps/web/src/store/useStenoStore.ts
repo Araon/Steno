@@ -25,7 +25,7 @@ interface StenoState {
   renderedVideoUrl: string | null;
 
   // Settings
-  aspectRatio: "16:9" | "9:16" | "1:1";
+  aspectRatio: "16:9" | "9:16";
 
   // Selection
   selectedCaptionId: string | null;
@@ -39,7 +39,7 @@ interface StenoState {
   setProcessingStep: (step: ProcessingStep) => void;
   setProcessingProgress: (progress: number) => void;
   setErrorMessage: (message: string | null) => void;
-  setAspectRatio: (ratio: "16:9" | "9:16" | "1:1") => void;
+  setAspectRatio: (ratio: "16:9" | "9:16") => void;
   setSelectedCaptionId: (id: string | null) => void;
 
   // Render actions

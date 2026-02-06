@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Player } from "@remotion/player";
-import { Monitor, Smartphone, Square } from "lucide-react";
+import { Monitor, Smartphone } from "lucide-react";
 import { useStenoStore } from "../store/useStenoStore";
 import { PreviewComposition, type PreviewCompositionProps } from "./PreviewComposition";
 import { isPositionCoords, presetToCoords, type CaptionPosition } from "@steno/contracts";
@@ -21,7 +21,6 @@ const TypedPlayer = Player as React.ComponentType<{
 const ASPECT_RATIOS = {
   "16:9": { width: 1920, height: 1080, icon: Monitor, label: "Landscape" },
   "9:16": { width: 1080, height: 1920, icon: Smartphone, label: "Portrait" },
-  "1:1": { width: 1080, height: 1080, icon: Square, label: "Square" },
 } as const;
 
 export const Preview: React.FC = () => {

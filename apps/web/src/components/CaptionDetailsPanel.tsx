@@ -12,11 +12,7 @@ import type {
 import { isPositionCoords, presetToCoords } from "@steno/contracts";
 
 const ANIMATION_OPTIONS: { value: CaptionAnimation; label: string }[] = [
-  { value: "scale-in", label: "Scale In" },
-  { value: "fade-in", label: "Fade In" },
   { value: "word-by-word", label: "Word by Word" },
-  { value: "typewriter", label: "Typewriter" },
-  { value: "none", label: "None" },
 ];
 
 const STYLE_OPTIONS: { value: CaptionStyle; label: string }[] = [
@@ -89,7 +85,7 @@ export const CaptionDetailsPanel: React.FC<CaptionDetailsPanelProps> = ({
     if (!caption) return;
     if (confirm(`Apply this ${type} to all captions?`)) {
       if (type === "position") {
-        updateAllCaptions({ position: value });
+        updateAllCaptions({ position: value as CaptionPosition });
       } else {
         updateAllCaptions({ [type]: value });
       }

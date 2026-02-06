@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pipenv run dev",
-    "start": "pipenv run start",
-    "install:py": "pipenv install",
-    "install:py:dev": "pipenv install --dev"
+    "dev": "./venv/bin/python -m uvicorn src.main:app --reload --port 8000",
+    "start": "./venv/bin/python -m uvicorn src.main:app --port 8000",
+    "install:py": "python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
   }
 }

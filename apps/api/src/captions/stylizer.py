@@ -271,8 +271,6 @@ class CaptionStylizer:
         Returns:
             Selected style.
         """
-        caption.text.lower()
-
         # Questions get italic style
         if caption.text.strip().endswith("?"):
             return CaptionStyle.ITALIC

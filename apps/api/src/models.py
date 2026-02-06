@@ -3,12 +3,12 @@
 These models mirror the TypeScript contracts in @steno/contracts.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class CaptionStyle(str, Enum):
+class CaptionStyle(StrEnum):
     """Visual style for captions."""
 
     NORMAL = "normal"
@@ -17,7 +17,7 @@ class CaptionStyle(str, Enum):
     HIGHLIGHT = "highlight"
 
 
-class CaptionAnimation(str, Enum):
+class CaptionAnimation(StrEnum):
     """Animation type for captions."""
 
     NONE = "none"
@@ -27,7 +27,7 @@ class CaptionAnimation(str, Enum):
     TYPEWRITER = "typewriter"
 
 
-class CaptionPositionPreset(str, Enum):
+class CaptionPositionPreset(StrEnum):
     """Position presets on screen."""
 
     TOP = "top"

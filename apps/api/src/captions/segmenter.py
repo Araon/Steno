@@ -54,6 +54,8 @@ class CaptionSegmenter:
         self.min_words = min_words_per_caption
         self.max_chars_per_line = max_chars_per_line
         self._nlp: Language | None = None
+        self.max_words_per_caption = max_words_per_caption
+        self.min_words_per_caption = min_words_per_caption
 
     @property
     def nlp(self) -> Language:

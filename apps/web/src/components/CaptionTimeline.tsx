@@ -10,7 +10,6 @@ interface TimelineCaptionBlockProps {
   onDragStart: (e: React.MouseEvent, captionId: string, dragType: 'move' | 'resize-left' | 'resize-right') => void;
   onSelect: (captionId: string) => void;
   selectedCaptionId: string | null;
-  trackIndex: number;
 }
 
 const TimelineCaptionBlock: React.FC<TimelineCaptionBlockProps> = ({
@@ -20,7 +19,6 @@ const TimelineCaptionBlock: React.FC<TimelineCaptionBlockProps> = ({
   onDragStart,
   onSelect,
   selectedCaptionId,
-  trackIndex,
 }) => {
   const isSelected = selectedCaptionId === caption.id;
   const left = (caption.start / totalDuration) * timelineWidth;
@@ -36,7 +34,7 @@ const TimelineCaptionBlock: React.FC<TimelineCaptionBlockProps> = ({
       style={{
         left: `${left}px`,
         width: `${width}px`,
-        top: `${trackIndex * 44 + 32}px`, // 32px offset for header
+        top: '32px',
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -102,40 +100,6 @@ export const CaptionTimeline: React.FC = () => {
   }, [captions]);
 
   const pixelsPerSecond = timelineWidth / totalDuration;
-
-  // Calculate tracks to prevent overlapping
-  const captionTracks = useMemo(() => {
-    if (!captions) return new Map<string, number>();
-    const tracks = new Map<string, number>();
-    const trackEndTimes: number[] = [];
-
-    // Sort captions by start time
-    const sortedCaptions = [...captions.captions].sort((a, b) => a.start - b.start);
-
-    sortedCaptions.forEach(caption => {
-      let assignedTrack = -1;
-      // Try to fit in existing tracks
-      for (let i = 0; i < trackEndTimes.length; i++) {
-        if (trackEndTimes[i] <= caption.start + 0.05) { // Small buffer
-          assignedTrack = i;
-          trackEndTimes[i] = caption.end;
-          break;
-        }
-      }
-      
-      // Create new track if needed
-      if (assignedTrack === -1) {
-        assignedTrack = trackEndTimes.length;
-        trackEndTimes.push(caption.end);
-      }
-      
-      tracks.set(caption.id, assignedTrack);
-    });
-
-    return tracks;
-  }, [captions]);
-
-  const maxTrackIndex = Math.max(...Array.from(captionTracks.values()), 0);
 
   // Update timeline width on resize
   React.useEffect(() => {
@@ -278,7 +242,7 @@ export const CaptionTimeline: React.FC = () => {
                 ref={timelineRef}
                 className="relative"
                 style={{ 
-                    minHeight: `${(maxTrackIndex + 1) * 44 + 32}px`, // Adjusted height based on tracks
+                    minHeight: '76px',
                     width: `${timelineWidth}px`
                 }}
                 onClick={() => setSelectedCaptionId(null)}
@@ -302,7 +266,6 @@ export const CaptionTimeline: React.FC = () => {
                         onDragStart={handleDragStart}
                         onSelect={setSelectedCaptionId}
                         selectedCaptionId={selectedCaptionId}
-                        trackIndex={captionTracks.get(caption.id) || 0}
                     />
                 ))}
             </div>
