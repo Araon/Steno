@@ -162,12 +162,12 @@ get_repo_info() {
     # Handle different URL formats:
     # - https://github.com/owner/repo.git
     # - git@github.com:owner/repo.git
-    if [[ $REMOTE_URL =~ ^https://github\.com/([^/]+)/([^/]+?)(\.git)?$ ]]; then
+    if [[ $REMOTE_URL =~ ^https://github\.com/([^/]+)/([^/]+)(\.git)?$ ]]; then
         REPO_OWNER="${BASH_REMATCH[1]}"
-        REPO_NAME="${BASH_REMATCH[2]}"
-    elif [[ $REMOTE_URL =~ ^git@github\.com:([^/]+)/([^/]+?)(\.git)?$ ]]; then
+        REPO_NAME="${BASH_REMATCH[2]%.git}"
+    elif [[ $REMOTE_URL =~ ^git@github\.com:([^/]+)/([^/]+)(\.git)?$ ]]; then
         REPO_OWNER="${BASH_REMATCH[1]}"
-        REPO_NAME="${BASH_REMATCH[2]}"
+        REPO_NAME="${BASH_REMATCH[2]%.git}"
     else
         log_error "Could not parse repository URL. Expected format: https://github.com/owner/repo.git or git@github.com:owner/repo.git"
         log_error "Got: $REMOTE_URL"
