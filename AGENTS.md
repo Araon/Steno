@@ -1,5 +1,7 @@
 # AGENTS.md - Steno Repository Guidelines
 
+Dummy commit to trigger release workflow
+
 ## Repository Overview
 
 Steno is a local-first video captioning tool with lyric-style kinetic typography. It's a monorepo with TypeScript/React frontend apps and a Python FastAPI backend.
