@@ -9,7 +9,6 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "dev:web": "turbo run dev --filter=@steno/web",
-    "dev:renderer": "turbo run dev --filter=@steno/renderer",
     "dev:api": "turbo run dev --filter=@steno/api",
     "dev:renderer-api": "turbo run dev --filter=@steno/renderer-api",
     "build:contracts": "turbo run build --filter=@steno/contracts"

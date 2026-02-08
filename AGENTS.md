@@ -8,8 +8,7 @@ Steno is a local-first video captioning tool with lyric-style kinetic typography
 
 **Architecture:**
 - `apps/web` - React/Vite frontend (port 5173)
-- `apps/renderer` - Remotion video renderer
-- `apps/renderer-api` - Express API for rendering (port 3001)
+- `apps/renderer-api` - Express API for rendering with Remotion (port 3001)
 - `apps/api` - Python FastAPI for transcription/NLP (port 8000)
 - `packages/contracts` - Shared TypeScript types and JSON schemas
 
@@ -26,7 +25,6 @@ pnpm dev
 # Individual services
 pnpm dev:web          # Frontend only
 pnpm dev:api          # Python API
-pnpm dev:renderer     # Remotion studio
 pnpm dev:renderer-api # Renderer API
 
 # Build
@@ -114,7 +112,7 @@ pnpm test -- --testNamePattern="test name"
 
 **Formatting (Black):**
 - Line length: 88 characters
-- Target Python: 3.9
+- Target Python: 3.11
 - Use double quotes for strings
 
 **Linting (Ruff):**

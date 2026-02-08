@@ -10,7 +10,7 @@ const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://localhost:8000";
 // Path to the renderer entry point
 const RENDERER_ENTRY = path.resolve(
   process.cwd(),
-  "../renderer/src/index.ts"
+  "src/compositions/index.ts"
 );
 
 // Bundled site URL (cached after first bundle)

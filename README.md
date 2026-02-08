@@ -36,7 +36,6 @@ pnpm dev
 
 # Or individually
 pnpm dev:web          # http://localhost:5173
-pnpm dev:renderer     # Remotion preview
 pnpm dev:renderer-api # http://localhost:3001
 pnpm dev:api          # http://localhost:8000
 ```
@@ -45,7 +44,7 @@ pnpm dev:api          # http://localhost:8000
 
 - **Frontend**: TypeScript, React, Remotion, Tailwind, Zustand
 - **Backend**: Python 3.11, FastAPI, Whisper, FFmpeg, spaCy
-- **Renderer API**: Node.js, Express, Remotion bundler
+- **Renderer API**: Node.js, Express, Remotion bundler/renderer
 
 ## Architecture
 
